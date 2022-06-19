@@ -34,12 +34,32 @@ namespace FF7Remake {
         void TABMain()
         {
             ImGui::TextCentered("PLAYER STATS");
-            ImGui::InputInt("HP", &g_GameData->Player->HP);
-            ImGui::InputInt("MP", &g_GameData->Player->MP);
-            ImGui::InputInt("Attack", &g_GameData->Player->Attack);
-            ImGui::InputInt("MagicAttack", &g_GameData->Player->MagicAttack);
-            ImGui::InputInt("Defense", &g_GameData->Player->Defense);
-            ImGui::InputInt("MagicDefense", &g_GameData->Player->MagicDefense);
+            ImGui::Text("HP (%d/%d)  ", g_GameData->Player->HP, g_GameData->Player->MaxHP);
+            ImGui::SameLine();
+            ImGui::InputInt("##HP1", &g_GameData->Player->HP);
+
+            ImGui::Text("MP (%d/%d)    ", g_GameData->Player->MP, g_GameData->Player->MaxMP);
+            ImGui::SameLine();
+            ImGui::InputInt("##MP1", &g_GameData->Player->MP);
+
+            ImGui::Text("Attack        ");
+            ImGui::SameLine();
+            ImGui::InputInt("##Attack1", &g_GameData->Player->Attack);
+
+            ImGui::Text("MagicAttack   ");
+            ImGui::SameLine();
+            ImGui::InputInt("##MagicAttack1", &g_GameData->Player->MagicAttack);
+
+            ImGui::Text("Defense       ");
+            ImGui::SameLine();
+            ImGui::InputInt("##Defense1", &g_GameData->Player->Defense);
+
+            ImGui::Text("MagicDefense  ");
+            ImGui::SameLine();
+            ImGui::InputInt("##MagicDefense1", &g_GameData->Player->MagicDefense);
+
+            ImGui::Spacing();
+            ImGui::Separator();
             ImGui::Spacing();
 
             ImGui::TextCentered("CHEATS");
@@ -125,9 +145,9 @@ namespace FF7Remake {
 
 	void Menu::Loops()
 	{
-        if (g_GameVariables->bINFHEALTH) {
+        if (g_GameVariables->bINFHEALTH)
             g_GameData->Player->HP = g_GameData->Player->MaxHP;
+        if (g_GameVariables->bINFMAGIC)
             g_GameData->Player->MP = g_GameData->Player->MaxMP;
-        }
 	}
 }
