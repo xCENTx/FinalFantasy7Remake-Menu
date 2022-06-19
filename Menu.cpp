@@ -88,7 +88,7 @@ namespace FF7Remake {
             ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(g_Menu->dbg_RAINBOW));
             ImGui::PushStyleColor(ImGuiCol_BorderShadow, ImVec4(g_Menu->dbg_RAINBOW));
         }
-        if (!ImGui::Begin("Final Fnatasy 7", &g_GameVariables->m_ShowMenu, 96))
+        if (!ImGui::Begin("Final Fantasy 7", &g_GameVariables->m_ShowMenu, 96))
         {
             ImGui::End();
             return;
