@@ -1108,8 +1108,10 @@ bool ImGui::Toggle(const char* label, bool* v)
 
     //  COLOR PROPERTIES
     ImU32 uncheck_col = GetColorU32(ImGuiCol_FrameBg);
+   // ImColor uncheck_col = ImColor(42, 42, 42, 255);// GetColorU32(ImGuiCol_FrameBg);
     ImU32 circle_col = GetColorU32(ImGuiCol_NavWindowingDimBg);
-    ImU32 check_col = GetColorU32(ImGuiCol_CheckMark);
+    //ImU32 check_col = GetColorU32(ImGuiCol_CheckMark);
+    ImU32 check_col = ImColor(42, 42, 42, 255);;
 
     //  Position
     const ImRect check_bb(pos, ImVec2(pos.x, pos.y) + ImVec2(square_sz * 1.5, square_sz * 0.8));
