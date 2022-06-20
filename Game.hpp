@@ -12,16 +12,17 @@ namespace FF7Remake {
 		std::vector<unsigned int> oParty4 = { 0x940 };
 	};
 
-	struct Stats
+	struct PlayerStats
 	{
-		char pad_0000[16];	//0x0000
-		int Level;	//0x0010
-		char pad_0014[28];	//0x0014
+		char pad_0000[36];	//0x0000
+		float LimitBreak;	//0x0024
+		char pad_0028[8];	//0x0028
 		int HP;	//0x0030
 		int MaxHP;	//0x0034
 		int MP;	//0x0038
 		int MaxMP;	//0x003C
-		char pad_0040[8];	//0x0040
+		int ExperiencePoints;	//0x0040
+		float ATB;	//0x0044
 		int Attack;	//0x0048
 		int MagicAttack;	//0x004C
 		int Defense;	//0x0050
@@ -32,17 +33,19 @@ namespace FF7Remake {
 		int Magic;	//0x0224
 		int Vitality;	//0x0228
 		int Spirit;	//0x022C
-		char pad_0230[128];	//0x0230
+		char pad_0230[112];	//0x0230
+		int PlayTime;	//0x02A0
+		char pad_02A4[12];	//0x02A4
 	};	//Size: 0x02B0
 
 	class GameData
 	{
 	public:
 		Offsets offsets{};
-		Stats* Cloud{};
-		Stats* Party2{};
-		Stats* Party3{};
-		Stats* Party4{};
+		PlayerStats* Cloud{};
+		PlayerStats* Party2{};
+		PlayerStats* Party3{};
+		PlayerStats* Party4{};
 
 		explicit GameData();
 		~GameData() noexcept = default;

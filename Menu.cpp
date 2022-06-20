@@ -92,7 +92,7 @@ namespace FF7Remake {
         }
 	}
 
-    namespace PlayerStats {
+    namespace Stats {
         void STATCloud()
         {
             ImGui::TextCentered("PLAYER STATS");
@@ -310,16 +310,16 @@ namespace FF7Remake {
             ImGui::Separator();
             switch (SELECTED_ITEM) {
             case(0):
-                PlayerStats::STATCloud();
+                Stats::STATCloud();
                 break;
             case(1):
-                PlayerStats::STATParty2();
+                Stats::STATParty2();
                 break;
             case(2):
-                PlayerStats::STATParty3();
+                Stats::STATParty3();
                 break;
             case(3):
-                PlayerStats::STATParty4();
+                Stats::STATParty4();
                 break;
             }
         }

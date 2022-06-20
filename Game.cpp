@@ -8,10 +8,10 @@ namespace FF7Remake {
 
 	void GameData::Init()
 	{
-		Cloud = (Stats*)g_GameData->ResolvePTRS(offsets.aStatsPTR, offsets.oCloud);
-		Party2 = (Stats*)g_GameData->ResolvePTRS(offsets.aStatsPTR, offsets.oParty2);
-		Party3 = (Stats*)g_GameData->ResolvePTRS(offsets.aStatsPTR, offsets.oParty3);
-		Party4 = (Stats*)g_GameData->ResolvePTRS(offsets.aStatsPTR, offsets.oParty4);
+		Cloud = (PlayerStats*)g_GameData->ResolvePTRS(offsets.aStatsPTR, offsets.oCloud);
+		Party2 = (PlayerStats*)g_GameData->ResolvePTRS(offsets.aStatsPTR, offsets.oParty2);
+		Party3 = (PlayerStats*)g_GameData->ResolvePTRS(offsets.aStatsPTR, offsets.oParty3);
+		Party4 = (PlayerStats*)g_GameData->ResolvePTRS(offsets.aStatsPTR, offsets.oParty4);
 #if DEBUG
 		g_Console->printdbg("ModuleBase: { %llx }\n", g_Console->color.DEFAULT, og_GameBase);
 		g_Console->printdbg("GameData::Stats->Cloud { %llx }\n", g_Console->color.DEFAULT, Cloud);
