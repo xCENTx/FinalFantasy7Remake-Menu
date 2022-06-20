@@ -10,7 +10,9 @@ namespace FF7Remake {
 
 	struct PlayerObject
 	{
-		char pad_0000[48];	//0x0000
+		char pad_0000[16];	//0x0000
+		int Level;	//0x0010
+		char pad_0014[28];	//0x0014
 		int HP;	//0x0030
 		int MaxHP;	//0x0034
 		int MP;	//0x0038
@@ -20,8 +22,14 @@ namespace FF7Remake {
 		int MagicAttack;	//0x004C
 		int Defense;	//0x0050
 		int MagicDefense;	//0x0054
-		char pad_0058[40];	//0x0058
-	};	//Size: 0x0080
+		int Luck;	//0x0058
+		char pad_005C[452];	//0x005C
+		int Strength;	//0x0220
+		int Magic;	//0x0224
+		int Vitality;	//0x0228
+		int Spirit;	//0x022C
+		char pad_0230[128];	//0x0230
+	};	//Size: 0x02B0
 
 	class GameData
 	{

@@ -34,37 +34,59 @@ namespace FF7Remake {
         void TABMain()
         {
             ImGui::TextCentered("PLAYER STATS");
-            ImGui::Text("HP (%d/%d)  ", g_GameData->Player->HP, g_GameData->Player->MaxHP);
-            ImGui::SameLine();
+            ImGui::Spacing();
+
             ImGui::InputInt("##HP1", &g_GameData->Player->HP);
-
-            ImGui::Text("MP (%d/%d)    ", g_GameData->Player->MP, g_GameData->Player->MaxMP);
             ImGui::SameLine();
+            ImGui::Text("HP (%d/%d)", g_GameData->Player->HP, g_GameData->Player->MaxHP);
+
             ImGui::InputInt("##MP1", &g_GameData->Player->MP);
-
-            ImGui::Text("Attack        ");
             ImGui::SameLine();
+            ImGui::Text("MP (%d/%d)", g_GameData->Player->MP, g_GameData->Player->MaxMP);
+
             ImGui::InputInt("##Attack1", &g_GameData->Player->Attack);
-
-            ImGui::Text("MagicAttack   ");
             ImGui::SameLine();
+            ImGui::Text("Attack");
+
             ImGui::InputInt("##MagicAttack1", &g_GameData->Player->MagicAttack);
-
-            ImGui::Text("Defense       ");
             ImGui::SameLine();
+            ImGui::Text("MagicAttack");
+
             ImGui::InputInt("##Defense1", &g_GameData->Player->Defense);
-
-            ImGui::Text("MagicDefense  ");
             ImGui::SameLine();
+            ImGui::Text("Defense");
+
             ImGui::InputInt("##MagicDefense1", &g_GameData->Player->MagicDefense);
+            ImGui::SameLine();
+            ImGui::Text("MagicDefense");
+
+            ImGui::InputInt("##Strength1", &g_GameData->Player->Strength);
+            ImGui::SameLine();
+            ImGui::Text("Strength");
+
+            ImGui::InputInt("##Magic1", &g_GameData->Player->Magic);
+            ImGui::SameLine();
+            ImGui::Text("Magic");
+
+            ImGui::InputInt("##Vitality1", &g_GameData->Player->Vitality);
+            ImGui::SameLine();
+            ImGui::Text("Vitality");
+
+            ImGui::InputInt("##Spirit1", &g_GameData->Player->Spirit);
+            ImGui::SameLine();
+            ImGui::Text("Spirit");
+
+            ImGui::InputInt("##Luck1", &g_GameData->Player->Luck);
+            ImGui::SameLine();
+            ImGui::Text("Luck");
 
             ImGui::Spacing();
             ImGui::Separator();
             ImGui::Spacing();
 
             ImGui::TextCentered("CHEATS");
-            ImGui::Toggle("ININITE HP", &g_GameVariables->bINFHEALTH);
-            ImGui::Toggle("ININITE MP", &g_GameVariables->bINFMAGIC);
+            ImGui::Toggle("INFINITE HP", &g_GameVariables->bINFHEALTH);
+            ImGui::Toggle("INFINITE MP", &g_GameVariables->bINFMAGIC);
         }
 
         void TABAbout()
@@ -119,8 +141,6 @@ namespace FF7Remake {
             ImGui::PopStyleColor();
         }
 
-        //  I like to use tabs to display my content in an organized manner, Here is an example on how you could do the same
-        //  As a courtesy I have left the TABS namespace with an Example Tab
         if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None))
         {
             if (ImGui::BeginTabItem("MAIN"))
@@ -147,6 +167,7 @@ namespace FF7Remake {
 	{
         if (g_GameVariables->bINFHEALTH)
             g_GameData->Player->HP = g_GameData->Player->MaxHP;
+
         if (g_GameVariables->bINFMAGIC)
             g_GameData->Player->MP = g_GameData->Player->MaxMP;
 	}
