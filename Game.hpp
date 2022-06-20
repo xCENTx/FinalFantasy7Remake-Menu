@@ -5,10 +5,14 @@
 namespace FF7Remake {
 
 	struct Offsets {
-		int BaseOffset = 0x057A57E8;
+		int aStatsPTR = 0x057A57E8;
+		std::vector<unsigned int> oCloud = { 0x880 };
+		std::vector<unsigned int> oParty2 = { 0x8C0 };
+		std::vector<unsigned int> oParty3 = { 0x900 };
+		std::vector<unsigned int> oParty4 = { 0x940 };
 	};
 
-	struct PlayerObject
+	struct Stats
 	{
 		char pad_0000[16];	//0x0000
 		int Level;	//0x0010
@@ -35,7 +39,10 @@ namespace FF7Remake {
 	{
 	public:
 		Offsets offsets{};
-		PlayerObject* Player{};
+		Stats* Cloud{};
+		Stats* Party2{};
+		Stats* Party3{};
+		Stats* Party4{};
 
 		explicit GameData();
 		~GameData() noexcept = default;
