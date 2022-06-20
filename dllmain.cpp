@@ -11,7 +11,8 @@ void BackgroundWorker()
     while (og_Running)
     {
         g_Menu->Loops();
-
+        std::this_thread::sleep_for(1ms);
+        std::this_thread::yield();
     }
     return;
 }
@@ -39,14 +40,17 @@ DWORD WINAPI MainThread()
     g_Console->printdbg("Main::Initialized\n", g_Console->color.green);
 #endif
 
-    //std::thread UPDATE(BackgroundWorker);
+    std::thread UPDATE(BackgroundWorker);
     while (og_Running)
     {
         if (GetAsyncKeyState(VK_INSERT) & 1) g_GameVariables->m_ShowMenu ^= 1;
         if (GetAsyncKeyState(VK_END) & 1) og_Killswitch = TRUE;
+        std::this_thread::sleep_for(1ms);
+        std::this_thread::yield();
     }
 
-    //UPDATE.join();
+    UPDATE.join();
+    std::this_thread::sleep_for(5ms);
     FreeLibraryAndExitThread(og_hModule, EXIT_SUCCESS);
 }
 
