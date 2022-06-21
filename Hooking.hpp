@@ -18,6 +18,10 @@ namespace FF7Remake {
 
 		void Hook();
 		void Unhook();
+
+		static void __fastcall HookControllerInput(INT64 a1);
+		void* m_OriginalCInputHandle{};
+		uint64_t m_ControllerInputHandle{};
 	};
 	inline std::unique_ptr<Hooking> g_Hooking;
 }
