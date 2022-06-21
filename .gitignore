@@ -49,3 +49,5 @@ bin/FF7Internal.dll
 .vs/FF7Internal/v16/.suo
 x64/Debug/FF7Internal.tlog/unsuccessfulbuild
 .vs/FF7Internal/v16/ipch/AutoPCH/3337915b543e4a26/CONSOLE.ipch
+x64/Debug/FF7Internal.Build.CppClean.log
+.vs/FF7Internal/v16/ipch/AutoPCH/ef216c61ac187810/IMGUI_IMPL_WIN32.ipch

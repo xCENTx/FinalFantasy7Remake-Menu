@@ -106,6 +106,18 @@ namespace FF7Remake {
             ImGui::SameLine();
             ImGui::Text("MP (%d/%d)", g_GameData->Cloud->MP, g_GameData->Cloud->MaxMP);
 
+            ImGui::InputFloat("##atb1", &g_GameData->Cloud->ATB);
+            ImGui::SameLine();
+            ImGui::Text("ATB");
+
+            ImGui::InputFloat("##limitbreak1", &g_GameData->Cloud->LimitBreak);
+            ImGui::SameLine();
+            ImGui::Text("LimitBreak");
+
+            ImGui::InputInt("##experience", &g_GameData->Cloud->ExperiencePoints);
+            ImGui::SameLine();
+            ImGui::Text("XP");
+
             ImGui::InputInt("##Attack1", &g_GameData->Cloud->Attack);
             ImGui::SameLine();
             ImGui::Text("Attack");
@@ -149,6 +161,8 @@ namespace FF7Remake {
             ImGui::TextCentered("CHEATS");
             if (ImGui::Toggle("INFINITE HP", &g_GameVariables->bINFHEALTH)) g_Console->LogEvent("Stats::InfiniteHealth ; ", g_GameVariables->bINFHEALTH);
             if (ImGui::Toggle("INFINITE MP", &g_GameVariables->bINFMAGIC)) g_Console->LogEvent("Stats::InfiniteMagic ; ", g_GameVariables->bINFMAGIC);
+            if (ImGui::Toggle("INFINITE LIMIT", &g_GameVariables->bINFLIMIT)) g_Console->LogEvent("Stats::InfiniteLIMIT ; ", g_GameVariables->bINFLIMIT);
+            if (ImGui::Toggle("INFINITE ATB", &g_GameVariables->bINFATB)) g_Console->LogEvent("Stats::InfiniteATB ; ", g_GameVariables->bINFATB);
         }
 
         void STATParty2()
@@ -349,8 +363,8 @@ namespace FF7Remake {
 
 	void Menu::Draw()
 	{
-		if (g_GameVariables->m_ShowMenu)
-			MainMenu();
+        if (g_GameVariables->m_ShowMenu)
+            MainMenu();
 
         //  Currently Unused
 		if (g_GameVariables->m_ShowHud)
@@ -405,13 +419,19 @@ namespace FF7Remake {
 
 	void Menu::Loops()
 	{
-        //  This isn't really infinite.
         // - You can die if you take more damage than maximum hp
-        // - You cannot use magic if it requires more MP than maximum mp
         if (g_GameVariables->bINFHEALTH)
             g_GameData->Cloud->HP = g_GameData->Cloud->MaxHP;
 
+        // - You cannot use magic if it requires more MP than maximum mp
         if (g_GameVariables->bINFMAGIC)
             g_GameData->Cloud->MP = g_GameData->Cloud->MaxMP;
+
+        // - These values may change as the game progresses
+        if (g_GameVariables->bINFLIMIT)
+            g_GameData->Cloud->LimitBreak = 1000;
+
+        if (g_GameVariables->bINFATB)
+            g_GameData->Cloud->ATB = 2000;
 	}
 }

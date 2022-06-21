@@ -148,6 +148,14 @@ static ImVec2           InputTextCalcTextSizeW(const ImWchar* text_begin, const 
 // - BulletTextV()
 //-------------------------------------------------------------------------
 
+//bool ImGui::ButtonPressed(unsigned int button)
+//{
+//    XINPUT_STATE state;
+//    ZeroMemory(&state, sizeof(XINPUT_STATE));
+//    XInputGetState(0, &state);
+//    return (state.Gamepad.wButtons & button) != 0;
+//}
+
 void ImGui::TextEx(const char* text, const char* text_end, ImGuiTextFlags flags)
 {
     ImGuiWindow* window = GetCurrentWindow();

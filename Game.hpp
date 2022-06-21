@@ -82,6 +82,8 @@ namespace FF7Remake {
 
 		bool bINFHEALTH = FALSE;
 		bool bINFMAGIC = FALSE;
+		bool bINFLIMIT = FALSE;
+		bool bINFATB = FALSE;
 
 		explicit GameVariables();
 		~GameVariables() noexcept = default;

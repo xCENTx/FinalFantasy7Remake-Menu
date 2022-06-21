@@ -78,6 +78,7 @@ namespace FF7Remake {
 		char tempPath[MAX_PATH];
 		GetModuleFileNameExA(g_GameHandle, NULL, tempPath, sizeof(tempPath));
 		g_GamePath = tempPath;
+
 #if DEBUG
 		g_Console->printdbg("GameVariables::PID - { %d }\n", g_Console->color.DEFAULT, g_GamePid);
 		g_Console->printdbg("GameVariables::GamePath - { %s }\n", g_Console->color.DEFAULT, g_GamePath);

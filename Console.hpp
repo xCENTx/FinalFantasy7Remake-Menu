@@ -24,15 +24,15 @@ namespace FF7Remake {
 	class Console
 	{
 	public:
+		Colors color;
 		FILE* stream_in{};
 		FILE* stream_out{};
 		FILE* stream_error{};
-		Colors color;
 		HANDLE g_Handle{};
 		HWND g_hWnd{};
+		
+		//	Logging & InputBuffers
 		bool verbose{};
-
-		//	INPUT BUFFERS
 		char input[32]{};
 		char input2[32]{};
 
@@ -48,10 +48,6 @@ namespace FF7Remake {
 		void scandbg(const char* Text, ...);
 		void LogEvent(std::string TEXT, bool FLAG);
 		void DestroyConsole();
-
-		//	FUNCTIONS
-		bool writeFile(const char* Path, const char* Text, unsigned int Length, DWORD * out = {});
-		bool readFile(const char* Path, char* Text, unsigned int Length, DWORD * out = {});
 	};
 	inline std::unique_ptr<Console> g_Console;
 }
