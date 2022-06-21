@@ -2,22 +2,23 @@
 namespace FF7Remake {
 	GameData::GameData()
 	{
-
-#if DEBUG
-		g_Console->printdbg("ModuleBase: %llx\n", g_Console->color.DEFAULT, og_GameBase);
-		g_Console->printdbg("GameData::Initialized\n", g_Console->color.pink);
-#endif
-
+		//	Establish base variables
 		return;
 	}
 
 	void GameData::Init()
 	{
-		//Player = (PlayerObject*)(*(uintptr_t*)(og_GameBase + g_GameData->offsets.BaseOffset)) + 880;
-		Player = (PlayerObject*)g_GameData->ResolvePTRS(offsets.BaseOffset, { 0x880 });
+		Cloud = (PlayerStats*)g_GameData->ResolvePTRS(offsets.aStatsPTR, offsets.oCloud);
+		Party2 = (PlayerStats*)g_GameData->ResolvePTRS(offsets.aStatsPTR, offsets.oParty2);
+		Party3 = (PlayerStats*)g_GameData->ResolvePTRS(offsets.aStatsPTR, offsets.oParty3);
+		Party4 = (PlayerStats*)g_GameData->ResolvePTRS(offsets.aStatsPTR, offsets.oParty4);
 #if DEBUG
-		g_Console->printdbg("PlayerObjectBase: %llx\n", g_Console->color.DEFAULT, Player);
-		g_Console->printdbg("PlayerHP: %d\n", g_Console->color.DEFAULT, Player->MaxHP);
+		g_Console->printdbg("ModuleBase: { %llx }\n", g_Console->color.DEFAULT, og_GameBase);
+		g_Console->printdbg("GameData::Stats->Cloud { %llx }\n", g_Console->color.DEFAULT, Cloud);
+		g_Console->printdbg("GameData::Stats->oParty2 { %llx }\n", g_Console->color.DEFAULT, Party2);
+		g_Console->printdbg("GameData::Stats->oParty3 { %llx }\n", g_Console->color.DEFAULT, Party3);
+		g_Console->printdbg("GameData::Stats->oParty4 { %llx }\n", g_Console->color.DEFAULT, Party4);
+		g_Console->printdbg("GameData::Initialized\n\n", g_Console->color.pink);
 #endif
 	}
 
@@ -50,10 +51,7 @@ namespace FF7Remake {
 
 	GameVariables::GameVariables()
 	{
-#if DEBUG
-		g_Console->printdbg("GameVariables::Initialized\n", g_Console->color.pink);
-#endif
-
+		//	Establish base variables
 		return;
 	}
 
@@ -80,13 +78,15 @@ namespace FF7Remake {
 		char tempPath[MAX_PATH];
 		GetModuleFileNameExA(g_GameHandle, NULL, tempPath, sizeof(tempPath));
 		g_GamePath = tempPath;
+
 #if DEBUG
-		g_Console->printdbg("GameData::PID - %d\n", g_Console->color.DEFAULT, g_GamePid);
-		g_Console->printdbg("GameData::GamePath - %s\n", g_Console->color.DEFAULT, g_GamePath);
-		g_Console->printdbg("GameData::WindowWidth - %x\n", g_Console->color.DEFAULT, g_GameWidth);
-		g_Console->printdbg("GameData::WindowHeight - %x\n", g_Console->color.DEFAULT, g_GameHeight);
-		g_Console->printdbg("GameData::WindowTitle - %s\n", g_Console->color.DEFAULT, g_GameTitle);
-		g_Console->printdbg("GameData::Init - Process Window Info Established\n", g_Console->color.pink);
+		g_Console->printdbg("GameVariables::PID - { %d }\n", g_Console->color.DEFAULT, g_GamePid);
+		g_Console->printdbg("GameVariables::GamePath - { %s }\n", g_Console->color.DEFAULT, g_GamePath);
+		g_Console->printdbg("GameVariables::WindowTitle - { %s }\n", g_Console->color.DEFAULT, g_GameTitle);
+		g_Console->printdbg("GameVariables::WindowWidth - { %d }\n", g_Console->color.DEFAULT, g_GameWidth);
+		g_Console->printdbg("GameVariables::WindowHeight - { %d }\n", g_Console->color.DEFAULT, g_GameHeight);
+		g_Console->printdbg("GameVariables::Init - Process Window Info Established\n", g_Console->color.pink);
+		g_Console->printdbg("GameVariables::Initialized\n\n", g_Console->color.pink);
 #endif
 	}
 }

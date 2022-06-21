@@ -1,7 +1,6 @@
 #include "D3D11Window.hpp"
 
 IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
 float HSV_RAINBOW_SPEED = 0.001;
 static float HSV_RAINBOW_HUE = 0;
 void SV_RAINBOW(float saturation, float value, float opacity)
@@ -17,26 +16,6 @@ void SV_RAINBOW(float saturation, float value, float opacity)
 	}
 }
 
-typedef BOOL(WINAPI* hk_SetCursorPos)(int, int);
-hk_SetCursorPos origSetCursorPos = NULL;
-BOOL WINAPI HOOK_SetCursorPos(int X, int Y)
-{
-	if (FF7Remake::g_GameVariables->m_ShowMenu)
-		return FALSE;
-
-	return origSetCursorPos(X, Y);
-}
-
-bool HookCursor()
-{
-	if (MH_CreateHook(&SetCursorPos, &HOOK_SetCursorPos, reinterpret_cast<LPVOID*>(&origSetCursorPos)) != MH_OK)
-		return FALSE;
-
-	if (MH_EnableHook(&SetCursorPos) != MH_OK)
-		return FALSE;
-
-	return TRUE;
-}
 namespace FF7Remake {
 	static uint64_t* MethodsTable = NULL;
 
@@ -187,7 +166,10 @@ namespace FF7Remake {
 		if (SUCCEEDED(swapChain->GetDevice(__uuidof(ID3D11Device), (void**)&m_Device))) {
 			ImGui::CreateContext();
 			ImGuiIO& io = ImGui::GetIO(); (void)io;
-			ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantTextInput || ImGui::GetIO().WantCaptureKeyboard;
+			ImGui::GetIO().WantCaptureMouse;
+			ImGui::GetIO().WantTextInput;
+			ImGui::GetIO().WantCaptureKeyboard;
+			io.ConfigFlags = ImGuiConfigFlags_NavEnableGamepad;
 			io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 			io.IniFilename = NULL;
 			m_Device->GetImmediateContext(&m_DeviceContext);

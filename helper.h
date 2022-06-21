@@ -21,6 +21,7 @@
 #include "libs/ImGui/imgui_Impl_dx11.h"
 #include "libs/ImGui/imgui_Impl_Win32.h"
 #include "libs/MinHook/MinHook.h"
+
 namespace FF7Remake {
 	using namespace std::chrono_literals;
 	inline HMODULE og_hModule{};

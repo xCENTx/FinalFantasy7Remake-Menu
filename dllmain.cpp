@@ -1,3 +1,4 @@
+#pragma once
 #include "helper.h"
 #include "Console.hpp"
 #include "Game.hpp"
@@ -35,6 +36,8 @@ DWORD WINAPI MainThread()
     g_Hooking = std::make_unique<Hooking>();
     g_Menu = std::make_unique<Menu>();
     g_Hooking->Hook();
+
+
 
 #if DEBUG
     g_Console->printdbg("Main::Initialized\n", g_Console->color.green);

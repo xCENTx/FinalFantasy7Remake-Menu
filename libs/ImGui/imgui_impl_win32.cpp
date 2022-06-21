@@ -30,6 +30,7 @@
 typedef DWORD (WINAPI *PFN_XInputGetCapabilities)(DWORD, DWORD, XINPUT_CAPABILITIES*);
 typedef DWORD (WINAPI *PFN_XInputGetState)(DWORD, XINPUT_STATE*);
 #endif
+#include "../../Game.hpp"
 
 // CHANGELOG
 // (minor and older changes stripped away, please see git history for details)
@@ -273,6 +274,11 @@ static void ImGui_ImplWin32_UpdateMousePos()
 }
 
 // Gamepad navigation mapping
+// Custom patch, not native to Dear ImGui
+// - counter
+// - button listener + logging
+// - Include Game.hpp;
+int COUNT = NULL;
 static void ImGui_ImplWin32_UpdateGamepads()
 {
 #ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
@@ -298,6 +304,7 @@ static void ImGui_ImplWin32_UpdateGamepads()
         const XINPUT_GAMEPAD& gamepad = xinput_state.Gamepad;
         io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
 
+        //  Map buttons for Dear ImGui Controls
         #define MAP_BUTTON(NAV_NO, BUTTON_ENUM)     { io.NavInputs[NAV_NO] = (gamepad.wButtons & BUTTON_ENUM) ? 1.0f : 0.0f; }
         #define MAP_ANALOG(NAV_NO, VALUE, V0, V1)   { float vn = (float)(VALUE - V0) / (float)(V1 - V0); if (vn > 1.0f) vn = 1.0f; if (vn > 0.0f && io.NavInputs[NAV_NO] < vn) io.NavInputs[NAV_NO] = vn; }
         MAP_BUTTON(ImGuiNavInput_Activate,      XINPUT_GAMEPAD_A);              // Cross / A
@@ -316,6 +323,25 @@ static void ImGui_ImplWin32_UpdateGamepads()
         MAP_ANALOG(ImGuiNavInput_LStickRight,   gamepad.sThumbLX,  +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
         MAP_ANALOG(ImGuiNavInput_LStickUp,      gamepad.sThumbLY,  +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
         MAP_ANALOG(ImGuiNavInput_LStickDown,    gamepad.sThumbLY,  -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32767);
+
+        //  Listen for L3 + R3
+        if (gamepad.wButtons == 0xC0) {
+            COUNT++;
+            if (COUNT >= 25) {
+                FF7Remake::g_GameVariables->m_ShowMenu ^= 1;
+                COUNT = NULL;
+            }
+        }
+
+        ////  Button input listener
+        //if (gamepad.wButtons > 0) {
+        //    COUNT++;
+        //    if (COUNT >= 10) {
+        //        printf("KEY PRESSED: { %x }\n", gamepad.wButtons);
+        //        COUNT = NULL;
+        //    }
+        //}
+
         #undef MAP_BUTTON
         #undef MAP_ANALOG
     }

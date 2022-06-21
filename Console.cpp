@@ -59,38 +59,6 @@ namespace FF7Remake {
 		}
 	}
 
-	bool Console::writeFile(const char* Path, const char* Text, unsigned int Length, DWORD* out)
-	{
-		DWORD temp = 0;
-		if (out == NULL)
-			out = &temp;
-		*out = 0;
-		auto handle = CreateFileA(Path, GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-		if (handle)
-		{
-			bool result = WriteFile(handle, Text, Length, out, NULL) && *out > 0;
-			CloseHandle(handle);
-			return result;
-		}
-		return false;
-	}
-
-	bool Console::readFile(const char* Path, char* Text, unsigned int Length, DWORD* out)
-	{
-		DWORD temp = 0;
-		if (out == NULL)
-			out = &temp;
-		*out = 0;
-		auto handle = CreateFileA(Path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-		if (handle)
-		{
-			bool result = ReadFile(handle, Text, Length, out, NULL) && *out > 0;
-			CloseHandle(handle);
-			return result;
-		}
-		return false;
-	}
-
 	void Console::DestroyConsole()
 	{
 		fclose(stream_in);
