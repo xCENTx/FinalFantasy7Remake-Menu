@@ -6,6 +6,7 @@ namespace FF7Remake {
 
 	struct Offsets {
 		int aStatsPTR = 0x057A57E8;
+		int aXinputState = 0x1D1F870;
 		std::vector<unsigned int> oCloud = { 0x880 };
 		std::vector<unsigned int> oParty2 = { 0x8C0 };
 		std::vector<unsigned int> oParty3 = { 0x900 };
