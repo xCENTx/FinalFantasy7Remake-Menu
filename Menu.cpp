@@ -417,8 +417,29 @@ namespace FF7Remake {
 
 	}
 
+    int VALUE = NULL;
+    bool bPAUSE = FALSE;
 	void Menu::Loops()
 	{
+        //  Check if menu is shown, then check value of our pause instruction
+        //  Basically this will pause and unpause the game for us
+        switch (g_GameVariables->m_ShowMenu) {
+        case(TRUE):
+            VALUE = *(int8_t*)(og_GameBase + g_GameData->offsets.aPauseGame);
+            if (VALUE == 116 && !bPAUSE) {
+                g_GameData->Patch(g_GameData->offsets.aPauseGame, (BYTE*)"\x75\x1F", 2);
+                bPAUSE = TRUE;
+            };
+            break;
+        case(FALSE):
+            VALUE = *(int8_t*)(og_GameBase + g_GameData->offsets.aPauseGame);
+            if (VALUE == 117 && bPAUSE) {
+                g_GameData->Patch(g_GameData->offsets.aPauseGame, (BYTE*)"\x74\x1F", 2);
+                bPAUSE = FALSE;
+            };
+            break;
+        }
+
         // - You can die if you take more damage than maximum hp
         if (g_GameVariables->bINFHEALTH)
             g_GameData->Cloud->HP = g_GameData->Cloud->MaxHP;

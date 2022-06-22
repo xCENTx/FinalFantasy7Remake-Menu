@@ -22,16 +22,18 @@ namespace FF7Remake {
 #endif
 	}
 
-	void GameData::Patch(BYTE* dst, BYTE* src, unsigned int size)
+	void GameData::Patch(uintptr_t Addr, BYTE* src, unsigned int size)
 	{
+		BYTE* dst = (BYTE*)(Addr + og_GameBase);
 		DWORD oldprotect;
 		VirtualProtect(dst, size, PAGE_EXECUTE_READWRITE, &oldprotect);
 		memcpy(dst, src, size);
 		VirtualProtect(dst, size, oldprotect, &oldprotect);
 	}
 
-	void GameData::Nop(BYTE* dst, unsigned int size)
+	void GameData::Nop(uintptr_t Addr, unsigned int size)
 	{
+		BYTE* dst = (BYTE*)(Addr + og_GameBase);
 		DWORD oldprotect;
 		VirtualProtect(dst, size, PAGE_EXECUTE_READWRITE, &oldprotect);
 		memset(dst, 0x00, size);
