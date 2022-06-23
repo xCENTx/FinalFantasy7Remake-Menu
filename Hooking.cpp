@@ -33,12 +33,22 @@ namespace FF7Remake {
 #if DEBUG
 		g_Console->printdbg("Hooking::Hook Initialized\n", g_Console->color.pink);
 #endif
+
+		//	Clear Console
+		//	Hide Console
+		//  Show an ImGui notification bubble to the user
+		system("cls");
+		g_Console->ACTIVE = TRUE;
+		g_Console->m_ShowConsole = FALSE;
+		g_GameVariables->m_ShowHud = TRUE;
 		return;
 	}
 
 	void Hooking::Unhook()
 	{
+		//	Begin Unhook Procedure
 		g_D3D11Window->Unhook();
+		MH_DisableHook((LPVOID)m_ControllerInputHandle);	//	Disable our controller hook, otherwise we will crash :D
 		MH_RemoveHook(MH_ALL_HOOKS);
 		g_Console->DestroyConsole();
 		return;

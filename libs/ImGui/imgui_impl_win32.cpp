@@ -328,6 +328,11 @@ static void ImGui_ImplWin32_UpdateGamepads()
         if (gamepad.wButtons == 0xC0) {
             COUNT++;
             if (COUNT >= 25) {
+                //  Hide our info message
+                if (FF7Remake::g_GameVariables->m_ShowHud == TRUE) 
+                    FF7Remake::g_GameVariables->m_ShowHud = FALSE;
+
+                //  Show / Hide Menu
                 FF7Remake::g_GameVariables->m_ShowMenu ^= 1;
                 COUNT = NULL;
             }

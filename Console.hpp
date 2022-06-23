@@ -33,6 +33,8 @@ namespace FF7Remake {
 		
 		//	Logging & InputBuffers
 		bool verbose{};
+		bool m_ShowConsole{};
+		bool ACTIVE{};
 		char input[32]{};
 		char input2[32]{};
 

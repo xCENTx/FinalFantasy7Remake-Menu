@@ -22,7 +22,7 @@ namespace FF7Remake {
 		//	FORWARD DECLARE FUNCTIONS
 		void Draw();
 		void MainMenu();
-		void HUD(bool* p_open);
+		void HUD();
 		void Loops();
 	private:
 		bool m_StyleInit{};

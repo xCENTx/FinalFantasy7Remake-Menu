@@ -40,6 +40,11 @@ namespace FF7Remake {
 		char pad_02A4[12];	//0x02A4
 	};	//Size: 0x02B0
 
+	struct Inventory
+	{
+
+	};
+
 	class GameData
 	{
 	public:
@@ -48,6 +53,7 @@ namespace FF7Remake {
 		PlayerStats* Party2{};
 		PlayerStats* Party3{};
 		PlayerStats* Party4{};
+		Inventory Items{};
 
 		explicit GameData();
 		~GameData() noexcept = default;
