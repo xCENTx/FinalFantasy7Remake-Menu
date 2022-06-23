@@ -31,22 +31,29 @@ DWORD WINAPI MainThread()
     g_GameData = std::make_unique<GameData>();
     g_GameVariables = std::make_unique<GameVariables>();
     g_GameData->Init();
-
     g_D3D11Window = std::make_unique<D3D11Window>();
     g_Hooking = std::make_unique<Hooking>();
     g_Menu = std::make_unique<Menu>();
     g_Hooking->Hook();
-
-
 
 #if DEBUG
     g_Console->printdbg("Main::Initialized\n", g_Console->color.green);
 #endif
 
     std::thread UPDATE(BackgroundWorker);
+
+    //  MAIN LOOP
     while (og_Running)
     {
-        if (GetAsyncKeyState(VK_INSERT) & 1) g_GameVariables->m_ShowMenu ^= 1;
+        if (GetAsyncKeyState(VK_INSERT) & 1)
+        {
+            //  Hide our info message
+            if (g_GameVariables->m_ShowHud == TRUE)
+                g_GameVariables->m_ShowHud = FALSE;
+            
+            //  Show / Hide Menu
+            g_GameVariables->m_ShowMenu ^= 1;
+        }
         if (GetAsyncKeyState(VK_END) & 1) og_Killswitch = TRUE;
         std::this_thread::sleep_for(1ms);
         std::this_thread::yield();

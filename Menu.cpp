@@ -100,17 +100,25 @@ namespace FF7Remake {
 
             ImGui::InputInt("##HP1", &g_GameData->Cloud->HP);
             ImGui::SameLine();
+            if (ImGui::Button("MAX##HP")) g_GameData->Cloud->HP = g_GameData->Cloud->MaxHP;
+            ImGui::SameLine();
             ImGui::Text("HP (%d/%d)", g_GameData->Cloud->HP, g_GameData->Cloud->MaxHP);
 
             ImGui::InputInt("##MP1", &g_GameData->Cloud->MP);
+            ImGui::SameLine();
+            if (ImGui::Button("MAX##MP")) g_GameData->Cloud->MP = g_GameData->Cloud->MaxMP;
             ImGui::SameLine();
             ImGui::Text("MP (%d/%d)", g_GameData->Cloud->MP, g_GameData->Cloud->MaxMP);
 
             ImGui::InputFloat("##atb1", &g_GameData->Cloud->ATB);
             ImGui::SameLine();
+            if (ImGui::Button("MAX##ATB")) g_GameData->Cloud->ATB = (float)2000;
+            ImGui::SameLine();
             ImGui::Text("ATB");
 
             ImGui::InputFloat("##limitbreak1", &g_GameData->Cloud->LimitBreak);
+            ImGui::SameLine();
+            if (ImGui::Button("MAX##Limit")) g_GameData->Cloud->LimitBreak = (float)1000;
             ImGui::SameLine();
             ImGui::Text("LimitBreak");
 
@@ -338,14 +346,24 @@ namespace FF7Remake {
             }
         }
 
+        void TABItem()
+        {
+            ImGui::InputInt("##POTION1", &g_GameData->Cloud->HP);
+            ImGui::SameLine();
+            if (ImGui::Button("POTION##HP")) g_GameData->Cloud->HP = g_GameData->Cloud->MaxHP;
+            ImGui::SameLine();
+            ImGui::Text("POTIONS (%d)", g_GameData->Cloud->HP);
+        }
+
         void TABAbout()
         {
             ImGui::Text("BASE MENU (PREVIEW)");
-            ImGui::Text("BUILD VERSION: v1.0");
-            ImGui::Text("BUILD DATE: 6/19/2022");
+            ImGui::Text("BUILD VERSION: v1.1");
+            ImGui::Text("BUILD DATE: 6/22/2022");
             if (ImGui::Checkbox("RGB MODE", &g_Menu->dbg_RAINBOW_THEME)) g_Console->LogEvent("Menu::RainbowTheme ; ", g_Menu->dbg_RAINBOW_THEME);
             if (ImGui::Checkbox("SHOW IMGUI DEMO", &g_GameVariables->m_ShowDemo)) g_Console->LogEvent("Menu::ShowImGuiDemo ; ", g_GameVariables->m_ShowDemo);
 #if DEBUG
+            if (ImGui::Checkbox("SHOW CONSOLE", &g_Console->m_ShowConsole)) g_Console->LogEvent("Console::ShowWindow ; ", g_Console->m_ShowConsole);
             if (ImGui::Checkbox("VERBOSE LOGGING", &g_Console->verbose)) g_Console->LogEvent("Console::VerboseLogging ; ", g_Console->verbose);
 #endif
             ImGui::Spacing();
@@ -356,6 +374,11 @@ namespace FF7Remake {
 #if DEBUG
                 g_Console->printdbg("\n\n[+] UNHOOK INITIALIZED [+]\n\n", g_Console->color.red);
 #endif
+
+                //  Restore PauseGame Patch
+                if (*(int8_t*)(og_GameBase + g_GameData->offsets.aPauseGame) == 117)
+                    g_GameData->Patch(g_GameData->offsets.aPauseGame, (BYTE*)"\x74\x1F", 2);
+                g_GameVariables->m_ShowMenu = FALSE;
                 og_Killswitch = TRUE;
             }
         }
@@ -363,22 +386,38 @@ namespace FF7Remake {
 
 	void Menu::Draw()
 	{
+        if (!g_GameVariables->m_ShowDemo)
+            Styles::InitStyle();
+
         if (g_GameVariables->m_ShowMenu)
             MainMenu();
 
         //  Currently Unused
 		if (g_GameVariables->m_ShowHud)
-			HUD(&g_GameVariables->m_ShowHud);
+			HUD();
 
 		if (g_GameVariables->m_ShowDemo)
 			ImGui::ShowDemoWindow();
+
+        //  Switch for showing and hiding the console
+        switch (g_Console->m_ShowConsole) {
+        case(TRUE):
+            if (!g_Console->ACTIVE) {
+                ShowWindow(g_Console->g_hWnd, SW_SHOW);
+                g_Console->ACTIVE = TRUE;
+            }
+            break;
+        case(FALSE):
+            if (g_Console->ACTIVE) {
+                ShowWindow(g_Console->g_hWnd, SW_HIDE);
+                g_Console->ACTIVE = FALSE;
+            }
+            break;
+        }
 	}
 
 	void Menu::MainMenu()
 	{
-        if (!g_GameVariables->m_ShowDemo)
-            Styles::InitStyle();
-
         if (g_Menu->dbg_RAINBOW_THEME) {
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(g_Menu->dbg_RAINBOW));
             ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(g_Menu->dbg_RAINBOW));
@@ -412,9 +451,20 @@ namespace FF7Remake {
         ImGui::End();
 	}
 
-	void Menu::HUD(bool* p_open)
+	void Menu::HUD()
 	{
-
+        ImGui::SetNextWindowPos(ImVec2(10, 10));
+        if (!ImGui::Begin("FFVii Internal Launch Window", NULL, 103))
+        {
+            ImGui::End();
+            return;
+        }
+        
+        ImGui::Text("FINAL FANTASY VII INTERNAL MENU LOADED");
+        ImGui::Text("PRESS [INSERT] OR [L3 + R3] TO SHOW THE MENU");
+        ImGui::Separator();
+        ImGui::TextColored(ImColor(255, 0, 0, 255), "MENU v1.1 | Released: Wednesday June 22, 2022");
+        ImGui::End();
 	}
 
     int VALUE = NULL;
