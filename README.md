@@ -1,4 +1,7 @@
 # FF7RemakeInternal
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/6b53eadefff6402ea7881bfb25a43b3d)](https://app.codacy.com/gh/xCENTx/FF7RemakeInternal?utm_source=github.com&utm_medium=referral&utm_content=xCENTx/FF7RemakeInternal&utm_campaign=Badge_Grade_Settings)
+
  Final Fantasy Vii Remake Internal Cheat w/ Dear ImGui
  
 USAGE  
