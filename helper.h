@@ -1,5 +1,5 @@
 #pragma once
-#define DEBUG 1
+#define DEBUG 0
 
 #include <windows.h>
 #include <Psapi.h>
