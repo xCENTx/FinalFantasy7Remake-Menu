@@ -1,69 +1,51 @@
 #include "D3D11Window.hpp"
 
 IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-float HSV_RAINBOW_SPEED = 0.001;
-static float HSV_RAINBOW_HUE = 0;
-void SV_RAINBOW(float saturation, float value, float opacity)
-{
-	using namespace FF7Remake;
-	HSV_RAINBOW_HUE -= HSV_RAINBOW_SPEED;
-	if (HSV_RAINBOW_HUE < -1.f) HSV_RAINBOW_HUE += 1.f;
-	for (int i = 0; i < 860; i++)
-	{
-		float hue = HSV_RAINBOW_HUE + (1.f / (float)860) * i;
-		if (hue < 0.f) hue += 1.f;
-		g_Menu->dbg_RAINBOW = ImColor::HSV(hue, (saturation / 255), (value / 255), (opacity / 255));
-	}
-}
 
-namespace FF7Remake {
-	static uint64_t* MethodsTable = NULL;
+namespace FF7Remake 
+{
+	static uint64_t* MethodsTable;
+
+	D3D11Window::~D3D11Window() { }
 
 	LRESULT D3D11Window::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
-		if (g_GameVariables->m_ShowMenu) {
+		if (g_GameData->m_ShowMenu) 
+		{
 			ImGui_ImplWin32_WndProcHandler((HWND)g_D3D11Window->m_OldWndProc, msg, wParam, lParam);
-			return TRUE;
+			return false;
 		}
 		return CallWindowProc((WNDPROC)g_D3D11Window->m_OldWndProc, hWnd, msg, wParam, lParam);
 	}
 
-	/// <summary>
-	/// INITIALIZE
-	/// </summary>
-	bool D3D11Window::Hook()
+	bool D3D11Window::GetWindowContext()
 	{
-		if (InitHook()) {
-			CreateHook(8, (void**)&oIDXGISwapChainPresent, HookPresent);
-			CreateHook(12, (void**)&oID3D11DrawIndexed, MJDrawIndexed);
-			Sleep(1000);
-#if DEBUG
+		if (HijackWindow()) 
+		{
+			//	Update Pointers
+			g_Hooking->pSwapchain_Present = MethodsTable[8];
+			g_Hooking->pSwapchain_DrawIndexed = MethodsTable[12];
+			free(MethodsTable);
+			m_Init = true;
+#if _DEBUG
 			g_Console->printdbg("D3D11Window::Hook Initialized\n", g_Console->color.pink);
 #endif
-			return TRUE;
+			return true;
 		}
-#if DEBUG
+#if _DEBUG
 		g_Console->printdbg("[+] D3D11Window::Hook Failed to Initialize\n", g_Console->color.red);
 #endif
-		return FALSE;
+		return false;
 	}
 
-	bool D3D11Window::CreateHook(uint16_t Index, void** Original, void* Function)
-	{
-		assert(Index >= 0 && Original != NULL && Function != NULL);
-		void* target = (void*)MethodsTable[Index];
-		if (MH_CreateHook(target, Function, Original) != MH_OK || MH_EnableHook(target) != MH_OK) {
-			return FALSE;
-		}
-		return TRUE;
-	}
-
-	bool D3D11Window::InitHook()
+	bool D3D11Window::HijackWindow()
 	{
 		if (!InitWindow())
-			return FALSE;
+			return false;
 
 		HMODULE D3D11Module = GetModuleHandleA("d3d11.dll");
+		if (!D3D11Module)
+			return false;
 
 		D3D_FEATURE_LEVEL FeatureLevel;
 		const D3D_FEATURE_LEVEL FeatureLevels[] = { D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_11_0 };
@@ -97,30 +79,26 @@ namespace FF7Remake {
 		IDXGISwapChain* SwapChain;
 		ID3D11Device* Device;
 		ID3D11DeviceContext* Context;
-		if (D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, FeatureLevels, 1, D3D11_SDK_VERSION, &SwapChainDesc, &SwapChain, &Device, &FeatureLevel, &Context) < 0)
+		if (D3D11CreateDeviceAndSwapChain(0, D3D_DRIVER_TYPE_HARDWARE, 0, 0, FeatureLevels, 1, D3D11_SDK_VERSION, &SwapChainDesc, &SwapChain, &Device, &FeatureLevel, &Context) < 0)
 		{
 			DeleteWindow();
-			return FALSE;
+			return false;
 		}
 
+		//	copy virtual method pointers into a table
 		MethodsTable = (uint64_t*)::calloc(205, sizeof(uint64_t));
 		memcpy(MethodsTable, *(uint64_t**)SwapChain, 18 * sizeof(uint64_t));
 		memcpy(MethodsTable + 18, *(uint64_t**)Device, 43 * sizeof(uint64_t));
 		memcpy(MethodsTable + 18 + 43, *(uint64_t**)Context, 144 * sizeof(uint64_t));
-		Sleep(1000);
 
-		//	INIT NOTICE
-		Beep(300, 300);
-
-		MH_Initialize();
 		SwapChain->Release();
-		SwapChain = NULL;
+		SwapChain = 0;
 		Device->Release();
-		Device = NULL;
+		Device = 0;
 		Context->Release();
-		Context = NULL;
+		Context = 0;
 		DeleteWindow();
-		return TRUE;
+		return true;
 	}
 
 	bool D3D11Window::InitWindow()
@@ -130,38 +108,37 @@ namespace FF7Remake {
 		WindowClass.lpfnWndProc = DefWindowProc;
 		WindowClass.cbClsExtra = 0;
 		WindowClass.cbWndExtra = 0;
-		WindowClass.hInstance = GetModuleHandle(NULL);
-		WindowClass.hIcon = NULL;
-		WindowClass.hCursor = NULL;
-		WindowClass.hbrBackground = NULL;
-		WindowClass.lpszMenuName = NULL;
+		WindowClass.hInstance = GetModuleHandle(0);
+		WindowClass.hIcon = 0;
+		WindowClass.hCursor = 0;
+		WindowClass.hbrBackground = 0;
+		WindowClass.lpszMenuName = 0;
 		WindowClass.lpszClassName = L"MJ";
-		WindowClass.hIconSm = NULL;
+		WindowClass.hIconSm = 0;
 		RegisterClassEx(&WindowClass);
-		WindowHwnd = CreateWindow(WindowClass.lpszClassName, L"DX11 Window", WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, NULL, NULL, WindowClass.hInstance, NULL);
-		if (WindowHwnd == NULL) {
-			return FALSE;
-		}
+		WindowHwnd = CreateWindow(WindowClass.lpszClassName, L"DX11 Window", WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, WindowClass.hInstance, 0);
+		if (!WindowHwnd) 
+			return false;
+		
 #if DEBUG
 		g_Console->printdbg("D3D11Window::Window Created\n", g_Console->color.pink);
 #endif
-		return TRUE;
+		return true;
 	}
 
 	bool D3D11Window::DeleteWindow()
 	{
 		DestroyWindow(WindowHwnd);
 		UnregisterClass(WindowClass.lpszClassName, WindowClass.hInstance);
-		if (WindowHwnd != NULL) {
-			return FALSE;
-		}
-#if DEBUG
+		if (WindowHwnd)
+			return false;
+#if _DEBUG
 		g_Console->printdbg("D3D11Window::Window Destroyed\n", g_Console->color.pink);
 #endif
-		return TRUE;
+		return true;
 	}
 
-	bool D3D11Window::Init(IDXGISwapChain* swapChain)
+	bool D3D11Window::InitImGui(IDXGISwapChain* swapChain)
 	{
 		if (SUCCEEDED(swapChain->GetDevice(__uuidof(ID3D11Device), (void**)&m_Device))) {
 			ImGui::CreateContext();
@@ -176,95 +153,44 @@ namespace FF7Remake {
 
 			DXGI_SWAP_CHAIN_DESC Desc;
 			swapChain->GetDesc(&Desc);
-			g_GameVariables->g_GameWindow = Desc.OutputWindow;
+			g_GameData->g_GameWindow = Desc.OutputWindow;
 
 			ID3D11Texture2D* BackBuffer;
 			swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&BackBuffer);
 			m_Device->CreateRenderTargetView(BackBuffer, NULL, &m_RenderTargetView);
 			BackBuffer->Release();
 
-			ImGui_ImplWin32_Init(g_GameVariables->g_GameWindow);
+			ImGui_ImplWin32_Init(g_GameData->g_GameWindow);
 			ImGui_ImplDX11_Init(m_Device, m_DeviceContext);
 			ImGui_ImplDX11_CreateDeviceObjects();
-			ImGui::GetIO().ImeWindowHandle = g_GameVariables->g_GameWindow;
-			m_OldWndProc = (WNDPROC)SetWindowLongPtr(g_GameVariables->g_GameWindow, GWLP_WNDPROC, (__int3264)(LONG_PTR)WndProc);
-			b_ImGui_Initialized = TRUE;
-#if DEBUG
+			ImGui::GetIO().ImeWindowHandle = g_GameData->g_GameWindow;
+			m_OldWndProc = (WNDPROC)SetWindowLongPtr(g_GameData->g_GameWindow, GWLP_WNDPROC, (__int3264)(LONG_PTR)WndProc);
+			b_ImGui_Initialized = true;
+#if _DEBUG
 			g_Console->printdbg("D3D11Window::Swapchain Initialized\n", g_Console->color.pink);
 #endif
-			return 1;
+			return true;
 		}
-		b_ImGui_Initialized = FALSE;
-		return 0;
-	}
-	
-	/// <summary>
-	/// RENDER LOOP
-	/// </summary>
-	HRESULT APIENTRY D3D11Window::HookPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags)
-	{
-		if (og_Killswitch) {
-			g_Hooking->Unhook();
-			g_D3D11Window->oIDXGISwapChainPresent(pSwapChain, SyncInterval, Flags);
-			og_Running = FALSE;
-			return 0;
-		}
-		g_D3D11Window->Overlay(pSwapChain);
-		return g_D3D11Window->oIDXGISwapChainPresent(pSwapChain, SyncInterval, Flags);
-	}
-
-	void APIENTRY D3D11Window::MJDrawIndexed(ID3D11DeviceContext* pContext, UINT IndexCount, UINT StartIndexLocation, INT BaseVertexLocation) {
-		return;
+		b_ImGui_Initialized = false;
+		return false;
 	}
 
 	void D3D11Window::Overlay(IDXGISwapChain* pSwapChain)
 	{
 		if (!b_ImGui_Initialized)
-			Init(pSwapChain);
+			InitImGui(pSwapChain);
 
-		SV_RAINBOW(169, 169, 200);
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
-		ImGui::GetIO().MouseDrawCursor = g_GameVariables->m_ShowMenu;
+		ImGui::GetIO().MouseDrawCursor = g_GameData->m_ShowMenu;
 
-		//	Render Menu Loop
 		g_Menu->Draw();
 
 		ImGui::EndFrame();
 		ImGui::Render();
-		m_DeviceContext->OMSetRenderTargets(1, &m_RenderTargetView, NULL);
+		m_DeviceContext->OMSetRenderTargets(1, &m_RenderTargetView, 0);
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	}
 
-	/// <summary>
-	/// UNHOOK
-	/// </summary>
-	void D3D11Window::Unhook()
-	{
-		SetWindowLongPtr(g_GameVariables->g_GameWindow, GWLP_WNDPROC, (LONG_PTR)m_OldWndProc);
-		DisableAll();
-		return;
-	}
-	
-	void D3D11Window::DisableHook(uint16_t Index)
-	{
-		assert(Index >= 0);
-		MH_DisableHook((void*)MethodsTable[Index]);
-		return;
-	}
-
-	void D3D11Window::DisableAll()
-	{
-		DisableHook(8);
-		DisableHook(12);
-		free(MethodsTable);
-		MethodsTable = NULL;
-		return;
-	}
-
-	D3D11Window::~D3D11Window()
-	{
-		Unhook();
-	}
 }

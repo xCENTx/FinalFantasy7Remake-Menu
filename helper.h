@@ -1,5 +1,4 @@
 #pragma once
-#define DEBUG 0
 
 #include <windows.h>
 #include <Psapi.h>
@@ -22,11 +21,10 @@
 #include "libs/ImGui/imgui_Impl_Win32.h"
 #include "libs/MinHook/MinHook.h"
 
-namespace FF7Remake {
+namespace FF7Remake 
+{
 	using namespace std::chrono_literals;
 	inline HMODULE og_hModule{};
-	inline LPCWSTR og_ModuleName{};
 	inline std::atomic_bool og_Running = TRUE;
 	inline std::atomic_bool og_Killswitch = FALSE;
-	static uintptr_t og_GameBase = (uintptr_t)GetModuleHandle(NULL);
 }

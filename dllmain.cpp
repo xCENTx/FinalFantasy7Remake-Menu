@@ -12,6 +12,19 @@ void BackgroundWorker()
     while (og_Running)
     {
         g_Menu->Loops();
+
+        if (og_Killswitch)
+        {
+            g_Hooking->Shutdown();
+            //  g_Hooking.release();
+
+            //  g_Menu.release();
+            //  g_D3D11Window.release();
+            //  g_GameData.release();
+
+            og_Running = false;
+        }
+
         std::this_thread::sleep_for(1ms);
         std::this_thread::yield();
     }
@@ -23,20 +36,18 @@ DWORD WINAPI MainThread()
     using namespace FF7Remake;
     g_Console = std::make_unique<Console>();
 
-#if DEBUG
+#if _DEBUG
     g_Console->InitializeConsole("FINAL FANTASY Vii INTERNAL - DEBUG CONSOLE");
     g_Console->printdbg("Final Fantasy Vii Remake Internal\n", g_Console->color.DEFAULT);
 #endif
 
     g_GameData = std::make_unique<GameData>();
-    g_GameVariables = std::make_unique<GameVariables>();
-    g_GameData->Init();
     g_D3D11Window = std::make_unique<D3D11Window>();
     g_Hooking = std::make_unique<Hooking>();
     g_Menu = std::make_unique<Menu>();
-    g_Hooking->Hook();
+    g_Hooking->Initialize();
 
-#if DEBUG
+#if _DEBUG
     g_Console->printdbg("Main::Initialized\n", g_Console->color.green);
 #endif
 
@@ -48,13 +59,16 @@ DWORD WINAPI MainThread()
         if (GetAsyncKeyState(VK_INSERT) & 1)
         {
             //  Hide our info message
-            if (g_GameVariables->m_ShowHud == TRUE)
-                g_GameVariables->m_ShowHud = FALSE;
+            if (g_GameData->m_ShowHud == TRUE)
+                g_GameData->m_ShowHud = FALSE;
             
             //  Show / Hide Menu
-            g_GameVariables->m_ShowMenu ^= 1;
+            g_GameData->m_ShowMenu ^= 1;
         }
-        if (GetAsyncKeyState(VK_END) & 1) og_Killswitch = TRUE;
+        
+        if (GetAsyncKeyState(VK_END) & 1)
+            og_Killswitch = true;
+        
         std::this_thread::sleep_for(1ms);
         std::this_thread::yield();
     }
