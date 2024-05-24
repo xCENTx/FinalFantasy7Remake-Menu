@@ -3,7 +3,8 @@
 
 static const char* stats_party[]{ "CLOUD", "PARTY SLOT 2", "PARTY SLOT 3", "PARTY SLOT 4", "PARTY SLOT 5"};
 
-namespace FF7Remake {
+namespace FF7Remake 
+{
 
 	namespace Styles {
         void InitStyle()
@@ -260,7 +261,7 @@ namespace FF7Remake {
             ImGui::Text("BASE MENU (PREVIEW)");
             ImGui::Text("BUILD VERSION: v1.2");
             ImGui::Text("BUILD DATE: 5/22/2024");
-            if (ImGui::Checkbox("SHOW IMGUI DEMO", &g_GameData->m_ShowDemo)) g_Console->LogEvent("Menu::ShowImGuiDemo ; ", g_GameData->m_ShowDemo);
+            ImGui::Checkbox("SHOW IMGUI DEMO", &g_GameData->m_ShowDemo);
 #if _DEBUG
             if (ImGui::Checkbox("SHOW CONSOLE", &g_Console->m_ShowConsole)) g_Console->LogEvent("Console::ShowWindow ; ", g_Console->m_ShowConsole);
             if (ImGui::Checkbox("VERBOSE LOGGING", &g_Console->verbose)) g_Console->LogEvent("Console::VerboseLogging ; ", g_Console->verbose);
@@ -271,10 +272,6 @@ namespace FF7Remake {
 
             if (ImGui::Button("UNHOOK DLL", ImVec2(ImGui::GetWindowContentRegionWidth() - 3, 20))) 
             {
-#if _DEBUG
-                g_Console->printdbg("\n\n[+] UNHOOK INITIALIZED [+]\n\n", g_Console->color.red);
-#endif
-
                 g_GameData->m_ShowMenu = false;
                 og_Killswitch = true;
             }
@@ -294,21 +291,6 @@ namespace FF7Remake {
 
 		if (g_GameData->m_ShowDemo)
 			ImGui::ShowDemoWindow();
-
-        switch (g_Console->m_ShowConsole) {
-        case(true):
-            if (!g_Console->ACTIVE) {
-                ShowWindow(g_Console->g_hWnd, SW_SHOW);
-                g_Console->ACTIVE = true;
-            }
-            break;
-        case(false):
-            if (g_Console->ACTIVE) {
-                ShowWindow(g_Console->g_hWnd, SW_HIDE);
-                g_Console->ACTIVE = false;
-            }
-            break;
-        }
 	}
 
 	void Menu::MainMenu()

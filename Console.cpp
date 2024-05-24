@@ -1,71 +1,68 @@
 #include "Console.hpp"
-namespace FF7Remake {
-	Console::Console()
-	{
-		return;
-	}
+namespace FF7Remake 
+{
+	FILE*				Console::m_pOutStream;
+	bool				Console::m_bInit;
 
-	void Console::InitializeConsole(const char* ConsoleName)
+	Console::Console() { }
+
+	Console::~Console() { DestroyConsole(); }
+
+	void Console::InitializeConsole(const char* title)
 	{
+		if (Console::m_bInit)
+		{
+			LogError("[!] [Console::InitializeConsole] failed to initialize console .\n");
+			return;
+		}
+
 		AllocConsole();
-		g_Handle = GetStdHandle(STD_OUTPUT_HANDLE);
-		g_hWnd = GetConsoleWindow();
-		freopen_s(&stream_in, "CONIN$", "r", stdin);
-		freopen_s(&stream_out, "CONOUT$", "w", stdout);
-		freopen_s(&stream_error, "CONOUT$", "w", stderr);
-		SetConsoleTitleA(ConsoleName);
-		ShowWindow(g_hWnd, SW_SHOW);
-		return;
+		m_pHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+		m_pHwnd = GetConsoleWindow();
+		freopen_s(&m_pOutStream, "CONOUT$", "w", stdout);
+		SetConsoleTitleA(title);
+		ShowWindow(m_pHwnd, SW_SHOW);
+		Console::m_bInit = true;
 	}
 
-	void Console::printdbg(const char* Text, int Color, ...)
+	void Console::cLog(const char* fmt, EColors Color, ...)
 	{
-		SetConsoleTextAttribute(g_Handle, Color);
+		SetConsoleTextAttribute(m_pHandle, Color);
 		va_list arg;
 		va_start(arg, Color);
-		vfprintf(stream_out, Text, arg);
+		vfprintf(m_pOutStream, fmt, arg);
 		va_end(arg);
-		SetConsoleTextAttribute(g_Handle, color.DEFAULT);
-		return;
+		SetConsoleTextAttribute(m_pHandle, EColor_DEFAULT);
 	}
 
-	void Console::scandbg(const char* Text, ...)
+	void Console::LogError(const char* fmt, ...)
 	{
+		SetConsoleTextAttribute(m_pHandle, EColor_red);
 		va_list arg;
-		va_start(arg, Text);
-		vfscanf(stream_in, Text, arg);
+		va_start(arg, fmt);
+		vfprintf(m_pOutStream, fmt, arg);
 		va_end(arg);
-		return;
-	}
-
-	void Console::LogEvent(std::string TEXT, bool FLAG)
-	{
-		std::string output;
-		std::string append;
-		int color;
-		switch (FLAG) {
-		case(TRUE):
-			output = " [ON]\n";
-			color = g_Console->color.green;
-			append = TEXT + output;
-			printdbg(append.c_str(), color);
-			break;
-		case(FALSE):
-			output = " [OFF]\n";
-			color = g_Console->color.red;
-			append = TEXT + output;
-			printdbg(append.c_str(), color);
-			break;
-		}
+		SetConsoleTextAttribute(m_pHandle, EColor_DEFAULT);
 	}
 
 	void Console::DestroyConsole()
 	{
-		fclose(stream_in);
-		fclose(stream_out);
-		fclose(stream_error);
-		DestroyWindow(g_hWnd);
+		fclose(m_pOutStream);
+		DestroyWindow(m_pHwnd);
 		FreeConsole();
-		return;
+		m_bInit = false;
 	}
+
+	void Console::Log(const char* fmt, ...)
+	{
+		if (!m_pOutStream)
+			return;
+
+		va_list arg;
+		va_start(arg, fmt);
+		vfprintf(m_pOutStream, fmt, arg);
+		va_end(arg);
+	}
+
+	void Console::Clear() { system("cls"); }
 }

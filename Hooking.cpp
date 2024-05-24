@@ -3,16 +3,11 @@ namespace FF7Remake
 {
 	Hooking::Hooking()
 	{
-		MH_Initialize();
-
 		pXInput_State = (g_GameData->g_GameBaseAddr + Offsets::oXinputState);
 		pAScene_Update = (g_GameData->g_GameBaseAddr + Offsets::oSceneUpdate);
 		pAPlayerState_SubHealth = (g_GameData->g_GameBaseAddr + Offsets::oSubHealth);
 
-
-#if _DEBUG
-		g_Console->printdbg("Hooking::Initialized\n", g_Console->color.pink);
-#endif
+		MH_Initialize();
 	}
 
 	Hooking::~Hooking()
@@ -31,6 +26,8 @@ namespace FF7Remake
 
 			if (pSwapchain_DrawIndexed)
 				CreateHook((LPVOID)pSwapchain_DrawIndexed, &Swapchain_DrawIndexed_hook, (void**)&Swapchain_DrawIndexed_stub);
+
+			g_GameData->m_ShowHud = true;
 		}
 
 		//	Controller Input Handler
@@ -46,15 +43,6 @@ namespace FF7Remake
 			CreateHook((LPVOID)pAPlayerState_SubHealth, &APlayerState_SubHealth_hook, (void**)&APlayerState_SubHealth_stub);
 
 		EnableAllHooks();
-
-		system("cls");
-		g_Console->ACTIVE = true;
-		g_Console->m_ShowConsole = false;
-		g_GameData->m_ShowHud = true;
-
-#if _DEBUG
-		g_Console->printdbg("Hooking::Hook Initialized\n", g_Console->color.pink);
-#endif
 	}
 
 	void Hooking::Shutdown()

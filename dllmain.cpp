@@ -16,11 +16,11 @@ void BackgroundWorker()
         if (og_Killswitch)
         {
             g_Hooking->Shutdown();
-            //  g_Hooking.release();
 
-            //  g_Menu.release();
-            //  g_D3D11Window.release();
-            //  g_GameData.release();
+            g_Hooking.release();
+            g_Menu.release();
+            g_D3D11Window.release();
+            g_GameData.release();
 
             og_Running = false;
         }
@@ -35,21 +35,11 @@ DWORD WINAPI MainThread()
 {
     using namespace FF7Remake;
     g_Console = std::make_unique<Console>();
-
-#if _DEBUG
-    g_Console->InitializeConsole("FINAL FANTASY Vii INTERNAL - DEBUG CONSOLE");
-    g_Console->printdbg("Final Fantasy Vii Remake Internal\n", g_Console->color.DEFAULT);
-#endif
-
     g_GameData = std::make_unique<GameData>();
     g_D3D11Window = std::make_unique<D3D11Window>();
     g_Hooking = std::make_unique<Hooking>();
     g_Menu = std::make_unique<Menu>();
     g_Hooking->Initialize();
-
-#if _DEBUG
-    g_Console->printdbg("Main::Initialized\n", g_Console->color.green);
-#endif
 
     std::thread UPDATE(BackgroundWorker);
 

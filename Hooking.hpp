@@ -8,9 +8,6 @@ namespace FF7Remake {
 	class Hooking
 	{
 	public:
-		explicit Hooking();
-		~Hooking() noexcept;
-
 		void Initialize();
 		void Shutdown();
 		bool CreateHook(LPVOID pTarget, LPVOID pDetour, LPVOID* pOrig);
@@ -52,6 +49,9 @@ namespace FF7Remake {
 		APlayerState_SubHealth APlayerState_SubHealth_stub = 0;
 		__int64 pAPlayerState_SubHealth = 0;
 
+		//	constructor
+		explicit Hooking();
+		~Hooking() noexcept;
 	};
 	inline std::unique_ptr<Hooking> g_Hooking;
 }

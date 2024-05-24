@@ -27,14 +27,8 @@ namespace FF7Remake
 			g_Hooking->pSwapchain_DrawIndexed = MethodsTable[12];
 			free(MethodsTable);
 			m_Init = true;
-#if _DEBUG
-			g_Console->printdbg("D3D11Window::Hook Initialized\n", g_Console->color.pink);
-#endif
 			return true;
 		}
-#if _DEBUG
-		g_Console->printdbg("[+] D3D11Window::Hook Failed to Initialize\n", g_Console->color.red);
-#endif
 		return false;
 	}
 
@@ -119,10 +113,6 @@ namespace FF7Remake
 		WindowHwnd = CreateWindow(WindowClass.lpszClassName, L"DX11 Window", WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, 0, 0, WindowClass.hInstance, 0);
 		if (!WindowHwnd) 
 			return false;
-		
-#if DEBUG
-		g_Console->printdbg("D3D11Window::Window Created\n", g_Console->color.pink);
-#endif
 		return true;
 	}
 
@@ -132,9 +122,6 @@ namespace FF7Remake
 		UnregisterClass(WindowClass.lpszClassName, WindowClass.hInstance);
 		if (WindowHwnd)
 			return false;
-#if _DEBUG
-		g_Console->printdbg("D3D11Window::Window Destroyed\n", g_Console->color.pink);
-#endif
 		return true;
 	}
 
@@ -166,9 +153,6 @@ namespace FF7Remake
 			ImGui::GetIO().ImeWindowHandle = g_GameData->g_GameWindow;
 			m_OldWndProc = (WNDPROC)SetWindowLongPtr(g_GameData->g_GameWindow, GWLP_WNDPROC, (__int3264)(LONG_PTR)WndProc);
 			b_ImGui_Initialized = true;
-#if _DEBUG
-			g_Console->printdbg("D3D11Window::Swapchain Initialized\n", g_Console->color.pink);
-#endif
 			return true;
 		}
 		b_ImGui_Initialized = false;

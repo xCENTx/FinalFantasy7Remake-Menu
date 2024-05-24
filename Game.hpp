@@ -8,56 +8,57 @@ namespace FF7Remake
 	{
 	public:
 
-		//	Dx & ImGui
-		int		g_GamePid{};
-		HMODULE g_GameModule{};
-		__int64 g_GameBaseAddr{};
-		HANDLE	g_GameHandle{};
-		HWND	g_GameWindow{};
-		int		g_GameWidth;
-		int		g_GameHeight;
-		ImVec2	g_WindowSize{};
-		LPCSTR	g_GameTitle;
-		LPCSTR	g_ClassName;
-		LPCSTR	g_GamePath;
+		//	PROCESS & WINDOW
+		int									g_GamePid{ 0 };
+		HMODULE								g_GameModule{ 0 };
+		__int64								g_GameBaseAddr{ 0 };
+		HANDLE								g_GameHandle{ 0 };
+		HWND								g_GameWindow{ 0 };
+		int									g_GameWidth{ 0 };
+		int									g_GameHeight{ 0 };
+		ImVec2								g_WindowSize{ 0.f , 0.f };
+		LPCSTR								g_GameTitle{ 0 };
+		LPCSTR								g_ClassName{ 0 };
+		LPCSTR								g_GamePath{ 0 };
 
-		//	MENU RELATED
-		bool m_ShowMenu{};
-		bool m_ShowHud{};
-		bool m_ShowDemo{};
+		//	MENU
+		bool								m_ShowMenu{ false };
+		bool								m_ShowHud{ false };
+		bool								m_ShowDemo{ false };
 
 		//	PATCHES
-		bool bDemiGod{ false };
-		bool bDemiGodMagic{ false };
-		bool bMaxLimit{ false };
-		bool bMaxATB{ false };
-
-		bool bPauseGame{ false };
-		bool bNullDmg{ false };
-		bool bModTimeScale{ false };
-		float fTimeScale{ 1.0f };
+		bool								bDemiGod{ false };
+		bool								bDemiGodMagic{ false };
+		bool								bMaxLimit{ false };
+		bool								bMaxATB{ false };
+		bool								bPauseGame{ false };
+		bool								bNullDmg{ false };
+		bool								bModTimeScale{ false };
+		float								fTimeScale{ 1.0f };
 
 		//	
+		void								Init();
+
+		//	constructor
 		GameData();
 		~GameData() noexcept = default;
-		void Init();
 	};
 	inline std::unique_ptr<GameData> g_GameData;
 
 	struct Offsets 
 	{
-		static int oXinputState;
-		static int oGameBase;
-		static int oSceneUpdate;
-		static int oSubHealth;
+		static int							oXinputState;
+		static int							oGameBase;
+		static int							oSceneUpdate;
+		static int							oSubHealth;
 	};
 
 	struct Patches
 	{
-		static void RefillCloudHP();
-		static void RefillCloudMP();
-		static void CloudMaxLimit();
-		static void CloudMaxATB();
+		static void							RefillCloudHP();
+		static void							RefillCloudMP();
+		static void							CloudMaxLimit();
+		static void							CloudMaxATB();
 	};
 	
 	class CGlobal
@@ -84,10 +85,11 @@ namespace FF7Remake
 		int									Luck;					//0x0038
 		char								pad_003C[4];			//0x003C
 
-		void RefillHP() { HP = MaxHP; }
-		void RefillMana() { MP = MaxMP; }
-		void SetMaxLimit() { LimitBreak = 1000.f; }
-		void SetMaxATB() { ATB = 2000.f; }
+		//	
+		void								RefillHP();
+		void								RefillMana();
+		void								SetMaxLimit();
+		void								SetMaxATB();
 	};	//Size: 0x0040
 
 	struct APlayerAttributes
@@ -106,7 +108,7 @@ namespace FF7Remake
 
 	class AGameState
 	{
-	public:
+	private:
 		char								pad_0000[2176];			//0x0000
 		struct ACloudState					mCloudState;			//0x0880
 		struct APlayerStats					mPartyStats[6];			//0x08E0
@@ -116,14 +118,14 @@ namespace FF7Remake
 		__int64								TotalGamTime;			//0x0B20
 	
 	public:
-		struct APlayerStats					GetPlayerStats(int index) { return this->mPartyStats[index]; }
-		void								SetPlayerStats(int index, const APlayerStats newStats) { this->mPartyStats[index] = newStats; }
-		struct APlayerStats					GetCloudStats() { return this->mCloudState.mStats; }
-		void								SetCloudStats(const APlayerStats newState) { this->mCloudState.mStats = newState; }
-		struct APlayerAttributes			GetPlayerAttributes(int index) { return this->mPartyAttributes[index]; }
-		void								SetPlayerAttributes(int index, APlayerAttributes newAttributes) { this->mPartyAttributes[index] = newAttributes; }
-		struct APlayerAttributes			GetCloudAttributes() { return GetPlayerAttributes(0); }											//	return this->mPamPartyAttributes[0];
-		void								SetCloudAttributes(APlayerAttributes newAttributes) { SetPlayerAttributes(0, newAttributes); }	//	this->mPartyAttributes[0] = newAttributes; }
+		struct APlayerStats					GetPlayerStats(int index);
+		void								SetPlayerStats(int index, const APlayerStats newStats);
+		struct APlayerStats					GetCloudStats();
+		void								SetCloudStats(const APlayerStats newState);
+		struct APlayerAttributes			GetPlayerAttributes(int index);
+		void								SetPlayerAttributes(int index, const APlayerAttributes newAttributes);
+		struct APlayerAttributes			GetCloudAttributes();
+		void								SetCloudAttributes(const APlayerAttributes newAttributes);
 
 	};	//Size: 0x0B28
 
@@ -134,35 +136,27 @@ namespace FF7Remake
 		class AGameState*					pGameState;				//0x0008
 	
 	public:
-		bool								Valid() { return this->mMatchState_0 <= 2; }
-		class AGameState*					GetGameState() 
-		{ 
-			AGameState* result{ nullptr };
-
-			if (this->Valid())
-				result = this->pGameState;
-
-			return result; 
-		}
+		bool								Valid();
+		class AGameState*					GetGameState();
 
 	};	//Size: 0x0010
 
 	class AScene
 	{
 	private:
-		char			pad_0008[1256];		//0x0008
-		bool			bPause;				//0x04F0
-		char			pad_04F1[23];		//0x04F1
-		float			TimeScale;			//0x0508
-		char			pad_050C[68];		//0x050C
+		char								pad_0008[1256];			//0x0008
+		bool								bPause;					//0x04F0
+		char								pad_04F1[23];			//0x04F1
+		float								TimeScale;				//0x0508
+		char								pad_050C[68];			//0x050C
 
 	private:
-		virtual void	Function0();
+		virtual void						Function0();
 
 	public:
-		void			SetPauseState(bool newState) { this->bPause = newState; }
-		bool			GetPauseState() { return this->bPause; }
-		void			SetTimeScale(float newScalar) { this->TimeScale = newScalar; }
-		float			GetTimeScale() { return this->TimeScale; }
+		void								SetPauseState(bool newState);
+		bool								GetPauseState();
+		void								SetTimeScale(float newScalar);
+		float								GetTimeScale();
 	};	//Size: 0x0550
 }

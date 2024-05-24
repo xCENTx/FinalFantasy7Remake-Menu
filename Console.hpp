@@ -2,54 +2,51 @@
 #include "helper.h"
 
 namespace FF7Remake {
-	struct Colors {
-		int dark_blue = 1;
-		int dark_green = 2;
-		int dark_teal = 3;
-		int dark_red = 4;
-		int dark_pink = 5;
-		int dark_yellow = 6;
-		int dark_white = 7;
-		int dark_gray = 8;
-		int blue = 9;
-		int green = 10;
-		int teal = 11;
-		int red = 12;
-		int pink = 13;
-		int yellow = 14;
-		int white = 15;
-		int DEFAULT = 15;
-	};
 
 	class Console
 	{
 	public:
-		Colors color;
-		FILE* stream_in{};
-		FILE* stream_out{};
-		FILE* stream_error{};
-		HANDLE g_Handle{};
-		HWND g_hWnd{};
-		
-		//	Logging & InputBuffers
-		bool verbose{};
-		bool m_ShowConsole{};
-		bool ACTIVE{};
-		char input[32]{};
-		char input2[32]{};
+		enum EColors : int
+		{
 
+			EColor_dark_blue = 1,
+			EColor_dark_green,
+			EColor_dark_teal,
+			EColor_dark_red,
+			EColor_dark_pink,
+			EColor_dark_yellow,
+			EColor_dark_white,
+			EColor_dark_gray,
+			EColor_blue,
+			EColor_green,
+			EColor_teal,
+			EColor_red,
+			EColor_pink,
+			EColor_yellow,
+			EColor_white,
+			EColor_DEFAULT = EColor_white
+		};
+
+	public:
+		static FILE*	m_pOutStream;
+		static bool		m_bInit;
+		HANDLE			m_pHandle{ 0 };
+		HWND			m_pHwnd{ 0 };
+		bool			m_bShow{ true };
+
+	public:
+		void			InitializeConsole(const char* title);
+		void			cLog(const char* fmt, EColors Color = EColor_DEFAULT, ...);
+		void			LogError(const char* fmt, ...);
+		void			DestroyConsole();
+
+	public:
+		static void		Log(const char* fmt, ...);
+		static void		Clear();
+
+		//	constructor
 		explicit Console();
-		~Console() noexcept = default;
-		Console(Console const&) = delete;
-		Console(Console&&) = delete;
-		Console& operator=(Console const&) = delete;
-		Console& operator=(Console&&) = delete;
-
-		void InitializeConsole(const char* ConsoleName);
-		void printdbg(const char* Text, int Color = {}, ...);
-		void scandbg(const char* Text, ...);
-		void LogEvent(std::string TEXT, bool FLAG);
-		void DestroyConsole();
+		~Console();
 	};
 	inline std::unique_ptr<Console> g_Console;
 }
