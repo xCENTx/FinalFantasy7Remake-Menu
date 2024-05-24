@@ -222,11 +222,11 @@ namespace FF7Remake
             ImGui::Combo("PARTY MEMBER", &selected_index, stats_party, IM_ARRAYSIZE(stats_party));
             ImGui::Separator();
 
-            static int index;
-            if (selected_index == 0)
-                index = -1;
-            else
-                index = selected_index - 1;
+            int index = (selected_index - 1);
+            //  if (selected_index == 0)
+            //      index = -1;
+            //  else
+            //      index = selected_index - 1;
 
             Widgets::StatsEditor(pGameState, index);
         }
@@ -263,8 +263,7 @@ namespace FF7Remake
             ImGui::Text("BUILD DATE: 5/22/2024");
             ImGui::Checkbox("SHOW IMGUI DEMO", &g_GameData->m_ShowDemo);
 #if _DEBUG
-            if (ImGui::Checkbox("SHOW CONSOLE", &g_Console->m_ShowConsole)) g_Console->LogEvent("Console::ShowWindow ; ", g_Console->m_ShowConsole);
-            if (ImGui::Checkbox("VERBOSE LOGGING", &g_Console->verbose)) g_Console->LogEvent("Console::VerboseLogging ; ", g_Console->verbose);
+            ImGui::Checkbox("SHOW CONSOLE", &g_Console->m_ShowConsole);
 #endif
             ImGui::Spacing();
             ImGui::Separator();
@@ -295,8 +294,7 @@ namespace FF7Remake
 
 	void Menu::MainMenu()
 	{
-
-        if (!ImGui::Begin("Final Fantasy 7", &g_GameData->m_ShowMenu, 96 | ImGuiWindowFlags_NoTitleBar))
+        if (!ImGui::Begin("Final Fantasy 7 Remake", &g_GameData->m_ShowMenu, 96 | ImGuiWindowFlags_NoTitleBar))
         {
             ImGui::End();
             return;
@@ -322,8 +320,10 @@ namespace FF7Remake
                 Tabs::TABAbout();
                 ImGui::EndTabItem();
             }
+
             ImGui::EndTabBar();
         }
+
         ImGui::End();
 	}
 
@@ -340,6 +340,7 @@ namespace FF7Remake
         ImGui::Text("PRESS [INSERT] OR [L3 + R3] TO SHOW THE MENU");
         ImGui::Separator();
         ImGui::TextColored(ImColor(255, 0, 0, 255), "MENU v1.2 | Released: May 23, 2024");
+
         ImGui::End();
 	}
 

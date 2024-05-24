@@ -5,6 +5,7 @@ namespace FF7Remake {
 	int Offsets::oGameBase{ 0x57B9260 };
 	int Offsets::oSceneUpdate{ 0x16B44A0 };
 	int Offsets::oSubHealth{ 0x0AFB6C0 };
+	int Offsets::oSubItem{ 0x0B1CAF0 };
 
 	GameData::GameData() { }
 

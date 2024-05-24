@@ -6,6 +6,7 @@ namespace FF7Remake
 		pXInput_State = (g_GameData->g_GameBaseAddr + Offsets::oXinputState);
 		pAScene_Update = (g_GameData->g_GameBaseAddr + Offsets::oSceneUpdate);
 		pAPlayerState_SubHealth = (g_GameData->g_GameBaseAddr + Offsets::oSubHealth);
+		pAPlayerState_SubItem = (g_GameData->g_GameBaseAddr + Offsets::oSubItem);
 
 		MH_Initialize();
 	}
@@ -19,7 +20,7 @@ namespace FF7Remake
 
 	void Hooking::Initialize()
 	{
-		if (g_D3D11Window->GetWindowContext())
+		if (Console::m_bGUI && g_D3D11Window->GetWindowContext())
 		{
 			if (pSwapchain_Present)
 				CreateHook((LPVOID)pSwapchain_Present, &Swapchain_present_hook, (void**)&Swapchain_present_stub);
@@ -34,13 +35,17 @@ namespace FF7Remake
 		if (pXInput_State)
 			CreateHook((LPVOID)pXInput_State, &XInput_State_hook, (void**)&XInput_State_stub);
 
-		//	
+		//	Render Scene Update 
 		if (pAScene_Update)
 			CreateHook((LPVOID)pAScene_Update, &AScene_Update_hook, (void**)&AScene_Update_stub);
 
-		//	
+		//	Party Sub Health Handler
 		if (pAPlayerState_SubHealth)
 			CreateHook((LPVOID)pAPlayerState_SubHealth, &APlayerState_SubHealth_hook, (void**)&APlayerState_SubHealth_stub);
+
+		//	Party Sub Item Handler
+		if (pAPlayerState_SubItem)
+			CreateHook((LPVOID)pAPlayerState_SubItem, &APlayerState_SubItem_hook, (void**)&APlayerState_SubItem_stub);
 
 		EnableAllHooks();
 	}
@@ -61,6 +66,9 @@ namespace FF7Remake
 
 		if (pAPlayerState_SubHealth)
 			DisableHook((LPVOID)pAPlayerState_SubHealth);
+
+		if (pAPlayerState_SubItem)
+			DisableHook((LPVOID)pAPlayerState_SubItem);
 
 		RemoveAllHooks();
 	}
@@ -219,10 +227,204 @@ namespace FF7Remake
 			.text:0000000140AFB746                 retn
 		*/
 
+		if (g_Console->m_bVerbose)
+			Console::Log("[+] [Hooking::APlayerState_SubHealth_hook(%d, %d)]\n", a1, a2);
+
 		if (g_GameData->bNullDmg)
 			return 0;
 
 		//	exec original fn
 		return g_Hooking->APlayerState_SubHealth_stub(a1, a2);
+	}
+
+	struct AComponents
+	{
+		struct AInventory*		pItems;				//0x0000
+		char					pad_0008[120];		//0x0008
+	};	//Size: 0x0080
+
+	struct OnUseItem
+	{
+		char					pad_0000[24];		//0x0000
+		struct APlayerStats*	pStats;				//0x0018
+		char					pad_0020[40];		//0x0020
+		struct AComponents*		pComponents;		//0x0048
+		char					pad_0050[48];		//0x0050
+	};	//Size: 0x0080
+
+	__int64 Hooking::APlayerState_SubItem_hook(__int64 p, int id)
+	{
+		///	PORT NOTES
+		/*
+			// AOB:	E8 ? ? ? ? B0 ? EB ? CC CC CC CC CC CC CC 48 89 5C 24 ? 57 [ CALL ]
+			//	STUB:	__int64 __fastcall APlayerState_SubItem(__int64 a1, int a2)
+			//	INSTRUCTION:	v13 = *(_DWORD *)(v12 + 0xC) - *((_DWORD *)v11 + 3);
+			//	ASM:	mov ecx,[rdx+0C]
+
+
+			a1 + 0x18 = PlayerStats ( pCloudState or pPlayerStats for the user ? )
+			a1 + 0x48 = InventoryIndex
+			a1 + 0x48 + 0X0C = ItemCount
+
+			v4 = a1 + 8i64 * a2;
+			v11 = *(__int64 **)(v4 + 0x48); // inventory
+			v12 = *v11;	// Slot
+			v13 = *(_DWORD *)(v12 + 0xC) - *((_DWORD *)v11 + 3); // sub item
+
+
+
+			//	FINDING AGAIN
+			This function is relatively easy to find.
+			First find an item by doing some scans on changed values in between using said item.
+			Figure out which function is adjusting the count value by checking what changes the item count value.
+
+			{
+				.text:0000000140B1CAF0 ; __int64 __fastcall APlayerState_SubItem(__int64, int)
+				.text:0000000140B1CAF0 APlayerState_SubItem proc near          ; CODE XREF: sub_140B020A0+F0↑p
+				.text:0000000140B1CAF0                                         ; DATA XREF: .rdata:0000000144FCFB14↓o ...
+				.text:0000000140B1CAF0
+				.text:0000000140B1CAF0 arg_0           = qword ptr  8
+				.text:0000000140B1CAF0 arg_8           = qword ptr  10h
+				.text:0000000140B1CAF0 arg_10          = qword ptr  18h
+				.text:0000000140B1CAF0 arg_18          = qword ptr  20h
+				.text:0000000140B1CAF0
+				.text:0000000140B1CAF0                 mov     [rsp+arg_10], rbp
+				.text:0000000140B1CAF5                 mov     [rsp+arg_18], rsi
+				.text:0000000140B1CAFA                 push    rdi
+				.text:0000000140B1CAFB                 sub     rsp, 20h
+				.text:0000000140B1CAFF                 movsxd  rax, edx
+				.text:0000000140B1CB02                 mov     rbp, rcx
+				.text:0000000140B1CB05                 lea     rsi, ds:0[rax*8]
+				.text:0000000140B1CB0D                 add     rsi, rcx
+				.text:0000000140B1CB10                 mov     rdi, [rsi+48h]
+				.text:0000000140B1CB14                 test    rdi, rdi
+				.text:0000000140B1CB17                 jz      loc_140B1CC2A
+				.text:0000000140B1CB1D
+				.text:0000000140B1CB1D loc_140B1CB1D:                          ; DATA XREF: .rdata:0000000144FCFB14↓o
+				.text:0000000140B1CB1D                                         ; .rdata:0000000144FCFB24↓o ...
+				.text:0000000140B1CB1D                 mov     [rsp+28h+arg_0], rbx
+				.text:0000000140B1CB22                 mov     [rsp+28h+arg_8], r14
+				.text:0000000140B1CB27                 call    sub_140FCB3D0
+				.text:0000000140B1CB2C                 xor     r14d, r14d
+				.text:0000000140B1CB2F                 test    al, al
+				.text:0000000140B1CB31                 jz      loc_140B1CBCC
+				.text:0000000140B1CB37                 test    rdi, rdi
+				.text:0000000140B1CB3A                 jz      loc_140B1CBCC
+				.text:0000000140B1CB40                 mov     ebx, r14d
+				.text:0000000140B1CB43                 lea     rax, [rbp+368h]
+				.text:0000000140B1CB4A                 mov     ecx, r14d
+				.text:0000000140B1CB4D                 nop     dword ptr [rax]
+				.text:0000000140B1CB50
+				.text:0000000140B1CB50 loc_140B1CB50:                          ; CODE XREF: APlayerState_SubItem+72↓j
+				.text:0000000140B1CB50                 cmp     [rax], r14
+				.text:0000000140B1CB53                 jz      short loc_140B1CB66
+				.text:0000000140B1CB55                 inc     ebx
+				.text:0000000140B1CB57                 inc     rcx
+				.text:0000000140B1CB5A                 add     rax, 8
+				.text:0000000140B1CB5E                 cmp     rcx, 64h ; 'd'
+				.text:0000000140B1CB62                 jl      short loc_140B1CB50
+				.text:0000000140B1CB64                 jmp     short loc_140B1CBCC
+				.text:0000000140B1CB66 ; ---------------------------------------------------------------------------
+				.text:0000000140B1CB66
+				.text:0000000140B1CB66 loc_140B1CB66:                          ; CODE XREF: APlayerState_SubItem+63↑j
+				.text:0000000140B1CB66                 mov     rcx, cs:qword_1457F5148
+				.text:0000000140B1CB6D                 test    rcx, rcx
+				.text:0000000140B1CB70                 jnz     short loc_140B1CB7E
+				.text:0000000140B1CB72                 call    sub_141C22CC0
+				.text:0000000140B1CB77                 mov     rcx, cs:qword_1457F5148
+				.text:0000000140B1CB7E
+				.text:0000000140B1CB7E loc_140B1CB7E:                          ; CODE XREF: APlayerState_SubItem+80↑j
+				.text:0000000140B1CB7E                 mov     rax, [rcx]
+				.text:0000000140B1CB81                 xor     r8d, r8d
+				.text:0000000140B1CB84                 lea     edx, [r8+18h]
+				.text:0000000140B1CB88                 call    qword ptr [rax+10h]
+				.text:0000000140B1CB8B                 mov     rcx, rax
+				.text:0000000140B1CB8E                 test    rax, rax
+				.text:0000000140B1CB91                 jz      short loc_140B1CBA7
+				.text:0000000140B1CB93                 mov     [rax], r14
+				.text:0000000140B1CB96                 mov     dword ptr [rax+8], 0FFFFFFFFh
+				.text:0000000140B1CB9D                 mov     [rax+0Ch], r14d
+				.text:0000000140B1CBA1                 mov     [rax+10h], r14b
+				.text:0000000140B1CBA5                 jmp     short loc_140B1CBAA
+				.text:0000000140B1CBA7 ; ---------------------------------------------------------------------------
+				.text:0000000140B1CBA7
+				.text:0000000140B1CBA7 loc_140B1CBA7:                          ; CODE XREF: APlayerState_SubItem+A1↑j
+				.text:0000000140B1CBA7                 mov     rcx, r14
+				.text:0000000140B1CBAA
+				.text:0000000140B1CBAA loc_140B1CBAA:                          ; CODE XREF: APlayerState_SubItem+B5↑j
+				.text:0000000140B1CBAA                 movsxd  rax, ebx
+				.text:0000000140B1CBAD                 mov     [rbp+rax*8+368h], rcx
+				.text:0000000140B1CBB5                 test    rcx, rcx
+				.text:0000000140B1CBB8                 jz      short loc_140B1CBCC
+				.text:0000000140B1CBBA                 mov     rax, [rdi]
+				.text:0000000140B1CBBD                 mov     [rcx], rax
+				.text:0000000140B1CBC0                 mov     eax, [rdi+8]
+				.text:0000000140B1CBC3                 mov     [rcx+8], eax
+				.text:0000000140B1CBC6                 mov     eax, [rdi+0Ch]
+				.text:0000000140B1CBC9                 mov     [rcx+0Ch], eax
+				.text:0000000140B1CBCC
+				.text:0000000140B1CBCC loc_140B1CBCC:                          ; CODE XREF: APlayerState_SubItem+41↑j
+				.text:0000000140B1CBCC                                         ; APlayerState_SubItem+4A↑j ...
+				.text:0000000140B1CBCC                 mov     rbx, [rsi+48h]
+				.text:0000000140B1CBD0                 mov     rdx, [rbx]
+				.text:0000000140B1CBD3                 test    rdx, rdx
+				.text:0000000140B1CBD6                 jz      short loc_140B1CBF6
+				.text:0000000140B1CBD8                 mov     ecx, [rdx+0Ch]
+				.text:0000000140B1CBDB                 mov     eax, r14d
+				.text:0000000140B1CBDE                 sub     ecx, [rbx+0Ch]
+				.text:0000000140B1CBE1                 cmovns  eax, ecx
+				.text:0000000140B1CBE4                 mov     [rdx+0Ch], eax
+				.text:0000000140B1CBE7                 mov     dword ptr [rbx+8], 0FFFFFFFFh
+				.text:0000000140B1CBEE                 mov     [rbx+0Ch], r14d
+				.text:0000000140B1CBF2                 mov     rbx, [rsi+48h]
+				.text:0000000140B1CBF6
+				.text:0000000140B1CBF6 loc_140B1CBF6:                          ; CODE XREF: APlayerState_SubItem+E6↑j
+				.text:0000000140B1CBF6                 test    rbx, rbx
+				.text:0000000140B1CBF9                 jz      short loc_140B1CC20
+				.text:0000000140B1CBFB                 mov     rcx, cs:qword_1457F5148
+				.text:0000000140B1CC02                 test    rcx, rcx
+				.text:0000000140B1CC05                 jnz     short loc_140B1CC13
+				.text:0000000140B1CC07                 call    sub_141C22CC0
+				.text:0000000140B1CC0C                 mov     rcx, cs:qword_1457F5148
+				.text:0000000140B1CC13
+				.text:0000000140B1CC13 loc_140B1CC13:                          ; CODE XREF: APlayerState_SubItem+115↑j
+				.text:0000000140B1CC13                 mov     rax, [rcx]
+				.text:0000000140B1CC16                 mov     rdx, rbx
+				.text:0000000140B1CC19                 call    qword ptr [rax+20h]
+				.text:0000000140B1CC1C                 mov     [rsi+48h], r14
+				.text:0000000140B1CC20
+				.text:0000000140B1CC20 loc_140B1CC20:                          ; CODE XREF: APlayerState_SubItem+109↑j
+				.text:0000000140B1CC20                 mov     rbx, [rsp+28h+arg_0]
+				.text:0000000140B1CC25                 mov     r14, [rsp+28h+arg_8]
+				.text:0000000140B1CC2A
+				.text:0000000140B1CC2A loc_140B1CC2A:                          ; CODE XREF: APlayerState_SubItem+27↑j
+				.text:0000000140B1CC2A                                         ; DATA XREF: .pdata:0000000145A771BC↓o ...
+				.text:0000000140B1CC2A                 mov     rbp, [rsp+28h+arg_10]
+				.text:0000000140B1CC2F                 mov     rsi, [rsp+28h+arg_18]
+				.text:0000000140B1CC34                 add     rsp, 20h
+				.text:0000000140B1CC38                 pop     rdi
+				.text:0000000140B1CC39                 retn
+				.text:0000000140B1CC39 APlayerState_SubItem endp
+			}
+		*/
+
+		///	Get Item Count
+		//	DWORD count{ 0 };
+		//	auto pUse = reinterpret_cast<OnUseItem*>(p);
+		//	if (pUse && pUse->pComponents)
+		//	{
+		//		AInventory* pInventory = pUse->pComponents->pItems;
+		//		if (pInventory)
+		//			count = pInventory->Item.Count;
+		//	}
+
+		if (g_Console->m_bVerbose)
+			Console::Log("[+] [Hooking::APlayerState_SubItem(0x%llX, %d)]\n", p, id);
+
+		if (g_GameData->bNullItem)
+			return 0;
+
+		//	exec original fn
+		return g_Hooking->APlayerState_SubItem_stub(p, id);
 	}
 }

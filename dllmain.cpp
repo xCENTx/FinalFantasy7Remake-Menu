@@ -35,6 +35,8 @@ DWORD WINAPI MainThread()
 {
     using namespace FF7Remake;
     g_Console = std::make_unique<Console>();
+    g_Console->InitializeConsole("Final Fantasy 7 Remake : Debug Console", false);    //  initialize console without menu gui
+
     g_GameData = std::make_unique<GameData>();
     g_D3D11Window = std::make_unique<D3D11Window>();
     g_Hooking = std::make_unique<Hooking>();

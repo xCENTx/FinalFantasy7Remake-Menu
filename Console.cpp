@@ -1,14 +1,15 @@
 #include "Console.hpp"
 namespace FF7Remake 
 {
-	FILE*				Console::m_pOutStream;
-	bool				Console::m_bInit;
+	FILE*				Console::m_pOutStream{ nullptr };
+	bool				Console::m_bInit{ false };
+	bool				Console::m_bGUI{ false };
 
 	Console::Console() { }
 
 	Console::~Console() { DestroyConsole(); }
 
-	void Console::InitializeConsole(const char* title)
+	void Console::InitializeConsole(const char* title, bool GUI)
 	{
 		if (Console::m_bInit)
 		{
@@ -23,6 +24,7 @@ namespace FF7Remake
 		SetConsoleTitleA(title);
 		ShowWindow(m_pHwnd, SW_SHOW);
 		Console::m_bInit = true;
+		Console::m_bGUI = GUI;
 	}
 
 	void Console::cLog(const char* fmt, EColors Color, ...)

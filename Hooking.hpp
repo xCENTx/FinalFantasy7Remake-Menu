@@ -49,6 +49,11 @@ namespace FF7Remake {
 		APlayerState_SubHealth APlayerState_SubHealth_stub = 0;
 		__int64 pAPlayerState_SubHealth = 0;
 
+		typedef __int64(__fastcall* APlayerState_SubItem)(__int64, int);
+		static __int64 __fastcall APlayerState_SubItem_hook(__int64 a1, int a2);
+		APlayerState_SubItem APlayerState_SubItem_stub = 0;
+		__int64 pAPlayerState_SubItem = 0;
+
 		//	constructor
 		explicit Hooking();
 		~Hooking() noexcept;

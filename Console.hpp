@@ -30,13 +30,15 @@ namespace FF7Remake {
 	public:
 		static FILE*	m_pOutStream;
 		static bool		m_bInit;
+		static bool		m_bGUI;
 		HANDLE			m_pHandle{ 0 };
 		HWND			m_pHwnd{ 0 };
 		bool			m_bShow{ true };
+		bool			m_bVerbose{ false };
 
 	public:
-		void			InitializeConsole(const char* title);
-		void			cLog(const char* fmt, EColors Color = EColor_DEFAULT, ...);
+		void			InitializeConsole(const char* title, bool bGUI = true);
+		void			cLog(const char* fmt, const EColors Color = EColor_DEFAULT, ...);
 		void			LogError(const char* fmt, ...);
 		void			DestroyConsole();
 

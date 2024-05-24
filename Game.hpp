@@ -33,6 +33,7 @@ namespace FF7Remake
 		bool								bMaxATB{ false };
 		bool								bPauseGame{ false };
 		bool								bNullDmg{ false };
+		bool								bNullItem{ false };
 		bool								bModTimeScale{ false };
 		float								fTimeScale{ 1.0f };
 
@@ -51,6 +52,7 @@ namespace FF7Remake
 		static int							oGameBase;
 		static int							oSceneUpdate;
 		static int							oSubHealth;
+		static int							oSubItem;
 	};
 
 	struct Patches
@@ -66,6 +68,19 @@ namespace FF7Remake
 	public:
 		static class AGameBase*				gGameBase;				//0x0000
 	};	//Size: 0x0008
+	
+	struct ItemSlot
+	{
+		char								pad_0000[12];		//0x0000
+		int									Count;				//0x000C
+		char								pad_0010[8];		//0x0010
+	};	//Size: 0x0018
+
+	struct AInventory
+	{
+		struct ItemSlot						Item;				//0x0000
+		char								pad_0018[312];		//0x0018
+	};	//Size: 0x0150
 
 	struct APlayerStats
 	{
