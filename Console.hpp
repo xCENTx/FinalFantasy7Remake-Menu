@@ -8,7 +8,6 @@ namespace FF7Remake {
 	public:
 		enum EColors : int
 		{
-
 			EColor_dark_blue = 1,
 			EColor_dark_green,
 			EColor_dark_teal,

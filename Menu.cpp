@@ -263,7 +263,7 @@ namespace FF7Remake
             ImGui::Text("BUILD DATE: 5/22/2024");
             ImGui::Checkbox("SHOW IMGUI DEMO", &g_GameData->m_ShowDemo);
 #if _DEBUG
-            ImGui::Checkbox("SHOW CONSOLE", &g_Console->m_ShowConsole);
+            //  ImGui::Checkbox("SHOW CONSOLE", &g_Console->m_ShowConsole);
 #endif
             ImGui::Spacing();
             ImGui::Separator();

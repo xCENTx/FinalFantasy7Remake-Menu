@@ -44,15 +44,32 @@ namespace FF7Remake {
 		__int64 pAScene_Update = 0;
 
 
-		typedef __int64(__fastcall*APlayerState_SubHealth)(unsigned __int8, int);
-		static __int64 __fastcall APlayerState_SubHealth_hook(unsigned __int8 a1, int a2);
-		APlayerState_SubHealth APlayerState_SubHealth_stub = 0;
-		__int64 pAPlayerState_SubHealth = 0;
+		typedef __int64(__fastcall*APlayerState_SetHealth)(unsigned __int8, int);
+		static __int64 __fastcall APlayerState_SetHealth_hook(unsigned __int8 a1, int a2);
+		APlayerState_SetHealth APlayerState_SetHealth_stub = 0;
+		__int64 pAPlayerState_SetHealth = 0;
+
+		typedef __int64 (__fastcall* APlayerState_SetMP)(unsigned __int8, int);
+		static __int64 __fastcall APlayerState_SetMana_hook(unsigned __int8 a1, int a2);
+		APlayerState_SetMP APlayerState_SetMana_stub = 0;
+		__int64 pAPlayerState_SetMana = 0;
+
 
 		typedef __int64(__fastcall* APlayerState_SubItem)(__int64, int);
 		static __int64 __fastcall APlayerState_SubItem_hook(__int64 a1, int a2);
 		APlayerState_SubItem APlayerState_SubItem_stub = 0;
 		__int64 pAPlayerState_SubItem = 0;
+
+		typedef __int64 (__fastcall* ATargetEntity_GetHP)(__int64 a1);
+		static __int64 __fastcall ATargetEntity_GetHP_hook(__int64 a1);
+		ATargetEntity_GetHP ATargetEntity_GetHP_stub = 0;
+		__int64 pATargetEntity_GetHP = 0;
+
+		typedef float(__fastcall* ATargetEntity_GetStaggerAmount)(__int64);
+		static __int64 __fastcall ATargetEntity_GetStaggerAmount_hook(__int64 a1);
+		ATargetEntity_GetStaggerAmount ATargetEntity_GetStaggerAmount_stub = 0;
+		__int64 pATargetEntity_GetStaggerAmount = 0;
+
 
 		//	constructor
 		explicit Hooking();

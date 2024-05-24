@@ -4,8 +4,11 @@ namespace FF7Remake {
 	int Offsets::oXinputState{ 0x1D1F920 };
 	int Offsets::oGameBase{ 0x57B9260 };
 	int Offsets::oSceneUpdate{ 0x16B44A0 };
-	int Offsets::oSubHealth{ 0x0AFB6C0 };
+	int Offsets::oSetHealth{ 0x0AFB6C0 };
+	int Offsets::oSetMana{ 0x0AFB8D0 };
 	int Offsets::oSubItem{ 0x0B1CAF0 };
+	int Offsets::oTargetGetHP{ 0x08884C0 };
+	int Offsets::oTargetGetStaggerAmount{ 0x0890620 };
 
 	GameData::GameData() { }
 
@@ -94,6 +97,16 @@ namespace FF7Remake {
 		pGameState->SetCloudStats(cloud_stats);
 	}
 
+	bool AItemSlot::IsValidIndex()
+	{
+		if (flag > 0)
+			return false;
+
+		if (flag2 > 0)
+			return false;
+
+		return isAvailable;
+	}
 
 	void APlayerStats::RefillHP() { HP = MaxHP; }
 
@@ -103,6 +116,10 @@ namespace FF7Remake {
 
 	void APlayerStats::SetMaxATB() { ATB = 2000.f; }
 
+	struct AGameState* ACloudState::GetGameState()
+	{
+		return reinterpret_cast<AGameState*>(reinterpret_cast<__int64>(pad_0000) - 0x880);
+	}
 
 	struct APlayerStats AGameState::GetPlayerStats(int index) { return this->mPartyStats[index]; }
 
@@ -140,4 +157,88 @@ namespace FF7Remake {
 	void AScene::SetTimeScale(float newScalar) { this->TimeScale = newScalar; }
 
 	float AScene::GetTimeScale() { return this->TimeScale; }
+
+
+	AGameState* OnUseItem::GetGameState() { return pCloudState->GetGameState(); }
+	
+	AInventory* OnUseItem::GetInventory() { return reinterpret_cast<AInventory*>(*pInventory); }
+
+	AItemSlot* OnUseItem::GetCurrentItemSlot() { return GetItemSlot(); }
+
+	AItemSlot* OnUseItem::GetItemSlot(int index)
+	{
+		/*
+			AItemSlot* result{ nullptr };
+			auto p = GetInventory();
+			auto i = index * sizeof(AItemSlot);
+			auto z = reinterpret_cast<long long>(p) + i;
+			auto inv = reinterpret_cast<AInventory*>(z);
+			AItemSlot* result = &inv->Item;
+		*/
+		return &reinterpret_cast<AInventory*>(reinterpret_cast<__int64>(GetInventory()) + index * sizeof(AItemSlot))->Item;
+	}
+
+	int OnUseItem::GetCurrentItemCount()
+	{
+		int result{ 0 };
+
+		auto inventory = GetInventory();
+
+		if (inventory)
+			result = inventory->Item.count;
+
+		return result;
+	}
+
+	OnSetHealth::OnSetHealth() {}
+	OnSetHealth::OnSetHealth(int i, int hp)
+	{
+		bool isTakeDmg{ false };
+		bool isHealing{ false };
+		AGameBase* pGame = CGlobal::gGameBase;
+		AGameState* pGameS = pGame->GetGameState();
+		APlayerStats player_stats = pGameS->GetPlayerStats(i - 1); //	due to the way structures are spaced cloud is not included in the player stats array. subtracting 1 resolves this issue.
+		int diff = player_stats.HP - hp;
+		if (diff < 0)	//	if <0 player is healing
+		{
+			isHealing = true;
+			diff = hp - player_stats.HP;
+		}
+		else if (diff > 0)
+			isTakeDmg = true;
+
+		index = i;
+		mNewHP = hp;
+		mDiff = diff;
+		bHealing = isHealing;
+		bTakingDmg = isTakeDmg;
+		mPlayerStats = player_stats;
+		pGameState = pGameS;
+	}
+
+	OnSetMana::OnSetMana() {}
+	OnSetMana::OnSetMana(int i, int mp)
+	{
+		bool isSubMana{ false };
+		bool isHealing{ false };
+		AGameBase* pGame = CGlobal::gGameBase;
+		AGameState* pGameS = pGame->GetGameState();
+		APlayerStats player_stats = pGameS->GetPlayerStats(i - 1); //	due to the way structures are spaced cloud is not included in the player stats array. subtracting 1 resolves this issue.
+		int diff = player_stats.MP - mp;
+		if (diff < 0)	//	if <0 player is healing mana
+		{
+			isHealing = true;
+			diff = mp - player_stats.MP;
+		}
+		else if (diff > 0)
+			isSubMana = true;
+
+		index = i;
+		mNewMP = mp;
+		mDiff = diff;
+		bHealing = isHealing;
+		bUsingMana = isSubMana;
+		mPlayerStats = player_stats;
+		pGameState = pGameS;
+	}
 }
