@@ -117,9 +117,9 @@ namespace FF7Remake
 	
 	public:
 		struct APlayerStats					GetPlayerStats(int index) { return this->mPartyStats[index]; }
-		void								SetPlayerStats(int index, APlayerStats newStats) { this->mPartyStats[index] = newStats; }
+		void								SetPlayerStats(int index, const APlayerStats newStats) { this->mPartyStats[index] = newStats; }
 		struct APlayerStats					GetCloudStats() { return this->mCloudState.mStats; }
-		void								SetCloudStats(APlayerStats newState) { this->mCloudState.mStats = newState; }
+		void								SetCloudStats(const APlayerStats newState) { this->mCloudState.mStats = newState; }
 		struct APlayerAttributes			GetPlayerAttributes(int index) { return this->mPartyAttributes[index]; }
 		void								SetPlayerAttributes(int index, APlayerAttributes newAttributes) { this->mPartyAttributes[index] = newAttributes; }
 		struct APlayerAttributes			GetCloudAttributes() { return GetPlayerAttributes(0); }											//	return this->mPamPartyAttributes[0];
