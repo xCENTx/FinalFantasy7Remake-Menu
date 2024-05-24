@@ -1,68 +1,18 @@
 #include "Game.hpp"
 namespace FF7Remake {
+	AGameBase* CGlobal::gGameBase{ nullptr };
+	int Offsets::oXinputState{ 0x1D1F920 };             //	0x1D1F870;
+	int Offsets::oGameBase{ 0x57B9260 };
+	int Offsets::oSceneUpdate{ 0x16B44A0 };
+	int Offsets::oSubHealth{ 0x0AFB6C0 };
+
 	GameData::GameData()
-	{
-		//	Establish base variables
-		return;
-	}
-
-	void GameData::Init()
-	{
-		Cloud = (PlayerStats*)g_GameData->ResolvePTRS(offsets.aStatsPTR, offsets.oCloud);
-		Party2 = (PlayerStats*)g_GameData->ResolvePTRS(offsets.aStatsPTR, offsets.oParty2);
-		Party3 = (PlayerStats*)g_GameData->ResolvePTRS(offsets.aStatsPTR, offsets.oParty3);
-		Party4 = (PlayerStats*)g_GameData->ResolvePTRS(offsets.aStatsPTR, offsets.oParty4);
-#if DEBUG
-		g_Console->printdbg("ModuleBase: { %llx }\n", g_Console->color.DEFAULT, og_GameBase);
-		g_Console->printdbg("GameData::Stats->Cloud { %llx }\n", g_Console->color.DEFAULT, Cloud);
-		g_Console->printdbg("GameData::Stats->oParty2 { %llx }\n", g_Console->color.DEFAULT, Party2);
-		g_Console->printdbg("GameData::Stats->oParty3 { %llx }\n", g_Console->color.DEFAULT, Party3);
-		g_Console->printdbg("GameData::Stats->oParty4 { %llx }\n", g_Console->color.DEFAULT, Party4);
-		g_Console->printdbg("GameData::Initialized\n\n", g_Console->color.pink);
-#endif
-	}
-
-	void GameData::Patch(uintptr_t Addr, BYTE* src, unsigned int size)
-	{
-		BYTE* dst = (BYTE*)(Addr + og_GameBase);
-		DWORD oldprotect;
-		VirtualProtect(dst, size, PAGE_EXECUTE_READWRITE, &oldprotect);
-		memcpy(dst, src, size);
-		VirtualProtect(dst, size, oldprotect, &oldprotect);
-	}
-
-	void GameData::Nop(uintptr_t Addr, unsigned int size)
-	{
-		BYTE* dst = (BYTE*)(Addr + og_GameBase);
-		DWORD oldprotect;
-		VirtualProtect(dst, size, PAGE_EXECUTE_READWRITE, &oldprotect);
-		memset(dst, 0x00, size);
-		VirtualProtect(dst, size, oldprotect, &oldprotect);
-	}
-
-	uintptr_t GameData::ResolvePTRS(uintptr_t ptr, std::vector<unsigned int> offsets)
-	{
-		uintptr_t addr = og_GameBase + ptr;
-		for (unsigned int i = 0; i < offsets.size(); ++i)
-		{
-			addr = *(uintptr_t*)addr;
-			addr += offsets[i];
-		}
-		return addr;
-	}
-
-	GameVariables::GameVariables()
-	{
-		//	Establish base variables
-		return;
-	}
-
-	//	Get Process Window Information
-	void GameVariables::Init()
 	{
 		g_GamePid = GetCurrentProcessId();
 		g_GameHandle = GetCurrentProcess();
 		g_GameWindow = GetForegroundWindow();
+		g_GameModule = GetModuleHandle(0);
+		g_GameBaseAddr = reinterpret_cast<__int64>(g_GameModule);
 
 		RECT tempRECT;
 		GetWindowRect(g_GameWindow, &tempRECT);
@@ -78,17 +28,75 @@ namespace FF7Remake {
 		g_ClassName = tempClassName;
 
 		char tempPath[MAX_PATH];
-		GetModuleFileNameExA(g_GameHandle, NULL, tempPath, sizeof(tempPath));
+		GetModuleFileNameExA(g_GameHandle, 0, tempPath, sizeof(tempPath));
 		g_GamePath = tempPath;
 
-#if DEBUG
-		g_Console->printdbg("GameVariables::PID - { %d }\n", g_Console->color.DEFAULT, g_GamePid);
-		g_Console->printdbg("GameVariables::GamePath - { %s }\n", g_Console->color.DEFAULT, g_GamePath);
-		g_Console->printdbg("GameVariables::WindowTitle - { %s }\n", g_Console->color.DEFAULT, g_GameTitle);
-		g_Console->printdbg("GameVariables::WindowWidth - { %d }\n", g_Console->color.DEFAULT, g_GameWidth);
-		g_Console->printdbg("GameVariables::WindowHeight - { %d }\n", g_Console->color.DEFAULT, g_GameHeight);
-		g_Console->printdbg("GameVariables::Init - Process Window Info Established\n", g_Console->color.pink);
-		g_Console->printdbg("GameVariables::Initialized\n\n", g_Console->color.pink);
+
+		CGlobal::gGameBase = reinterpret_cast<AGameBase*>(g_GameBaseAddr + Offsets::oGameBase);
+	}
+
+	void GameData::Init()
+	{
+#if _DEBUG
+		g_Console->printdbg("ModuleBase: { %llx }\n", g_Console->color.DEFAULT, g_GameBaseAddr);
+		g_Console->printdbg("GameStateBase: { %llx }\n", g_Console->color.DEFAULT, CGlobal::gGameBase);
+		g_Console->printdbg("GameData::Initialized\n\n", g_Console->color.pink);
 #endif
+	}
+
+	void Patches::RefillCloudHP()
+	{
+		AGameState* pGameState = CGlobal::gGameBase->GetGameState();
+		if (!pGameState)
+			return;
+
+		//	Get cloud player stats
+		APlayerStats cloud_stats = pGameState->GetCloudStats();
+		cloud_stats.RefillHP();	//	set hp var to match max hp
+
+		//	 Set cloud new player stats
+		pGameState->SetCloudStats(cloud_stats);
+	}
+
+	void Patches::RefillCloudMP()
+	{
+		AGameState* pGameState = CGlobal::gGameBase->GetGameState();
+		if (!pGameState)
+			return;
+
+		//	Get cloud player stats
+		APlayerStats cloud_stats = pGameState->GetCloudStats();
+		cloud_stats.RefillMana();
+
+		//	 Set cloud new player stats
+		pGameState->SetCloudStats(cloud_stats);
+	}
+
+	void Patches::CloudMaxLimit()
+	{
+		AGameState* pGameState = CGlobal::gGameBase->GetGameState();
+		if (!pGameState)
+			return;
+
+		//	Get cloud player stats
+		APlayerStats cloud_stats = pGameState->GetCloudStats();
+		cloud_stats.SetMaxLimit();
+
+		//	 Set cloud new player stats
+		pGameState->SetCloudStats(cloud_stats);
+	}
+
+	void Patches::CloudMaxATB()
+	{
+		AGameState* pGameState = CGlobal::gGameBase->GetGameState();
+		if (!pGameState)
+			return;
+
+		//	Get cloud player stats
+		APlayerStats cloud_stats = pGameState->GetCloudStats();
+		cloud_stats.SetMaxATB();
+
+		//	 Set cloud new player stats
+		pGameState->SetCloudStats(cloud_stats);
 	}
 }

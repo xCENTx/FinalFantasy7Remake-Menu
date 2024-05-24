@@ -1,7 +1,7 @@
 #include "Menu.hpp"
 
-int SELECTED_ITEM;
-const char* ITEMS[4]{ "CLOUD", "PARTY SLOT 2", "PARTY SLOT 3", "PARTY SLOT 4" };
+
+static const char* stats_party[]{ "CLOUD", "PARTY SLOT 2", "PARTY SLOT 3", "PARTY SLOT 4", "PARTY SLOT 5"};
 
 namespace FF7Remake {
 
@@ -69,300 +69,199 @@ namespace FF7Remake {
             colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
             colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
             colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
-            
-            switch(g_Menu->dbg_RAINBOW_THEME) {
-            case(TRUE):
-                //  RGB MODE STLYE PROPERTIES
-                colors[ImGuiCol_Separator] = ImVec4(g_Menu->dbg_RAINBOW);
-                colors[ImGuiCol_SeparatorHovered] = ImVec4(g_Menu->dbg_RAINBOW);
-                colors[ImGuiCol_SeparatorActive] = ImVec4(g_Menu->dbg_RAINBOW);
-                colors[ImGuiCol_TitleBg] = ImVec4(0, 0, 0, 1.0f);
-                colors[ImGuiCol_TitleBgActive] = ImVec4(0, 0, 0, 1.0f);
-                colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0, 0, 0, 1.0f);
-                break;
-            case(FALSE):
-                colors[ImGuiCol_Separator] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
-                colors[ImGuiCol_SeparatorHovered] = ImVec4(0.10f, 0.40f, 0.75f, 0.78f);
-                colors[ImGuiCol_SeparatorActive] = ImVec4(0.10f, 0.40f, 0.75f, 1.00f);
-                colors[ImGuiCol_TitleBg] = ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
-                colors[ImGuiCol_TitleBgActive] = ImVec4(0.16f, 0.29f, 0.48f, 1.00f);
-                colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
-                break;
-            }
         }
 	}
 
-    namespace Stats {
-        void STATCloud()
+    namespace Widgets
+    {
+        void StatsEditor(AGameState* pGameState, int index)
         {
+            if (!pGameState)
+                return;
+
+            APlayerStats stats;
+            APlayerAttributes attributes;
+            bool bUpdateStats{ false };
+            bool bUpdateAttributes{ false };
+            if (index == -1)
+            {
+                stats = pGameState->GetCloudStats();
+                attributes = pGameState->GetCloudAttributes();
+            }
+            else
+            {
+                stats = pGameState->GetPlayerStats(index);
+                attributes = pGameState->GetPlayerAttributes(index + 1);
+            }
+
             ImGui::TextCentered("PLAYER STATS");
             ImGui::Spacing();
 
-            ImGui::InputInt("##HP1", &g_GameData->Cloud->HP);
+            if (ImGui::InputInt("##HP1", &stats.HP))
+                bUpdateStats = true;
             ImGui::SameLine();
-            if (ImGui::Button("MAX##HP")) g_GameData->Cloud->HP = g_GameData->Cloud->MaxHP;
+            if (ImGui::Button("MAX##HP"))
+            {
+                stats.RefillHP();
+                bUpdateStats = true;
+            }
             ImGui::SameLine();
-            ImGui::Text("HP (%d/%d)", g_GameData->Cloud->HP, g_GameData->Cloud->MaxHP);
+            ImGui::Text("HP (%d/%d)", stats.HP, stats.MaxHP);
 
-            ImGui::InputInt("##MP1", &g_GameData->Cloud->MP);
+            if (ImGui::InputInt("##MP1", &stats.MP))
+                bUpdateStats = true;
             ImGui::SameLine();
-            if (ImGui::Button("MAX##MP")) g_GameData->Cloud->MP = g_GameData->Cloud->MaxMP;
+            if (ImGui::Button("MAX##MP"))
+            {
+                stats.RefillMana();
+                bUpdateStats = true;
+            }
             ImGui::SameLine();
-            ImGui::Text("MP (%d/%d)", g_GameData->Cloud->MP, g_GameData->Cloud->MaxMP);
+            ImGui::Text("MP (%d/%d)", stats.MP, stats.MaxMP);
 
-            ImGui::InputFloat("##atb1", &g_GameData->Cloud->ATB);
+            if (ImGui::InputFloat("##atb1", &stats.ATB))
+                bUpdateStats = true;
             ImGui::SameLine();
-            if (ImGui::Button("MAX##ATB")) g_GameData->Cloud->ATB = (float)2000;
+            if (ImGui::Button("MAX##ATB"))
+            {
+                stats.SetMaxATB();
+                bUpdateStats = true;
+            }
             ImGui::SameLine();
             ImGui::Text("ATB");
 
-            ImGui::InputFloat("##limitbreak1", &g_GameData->Cloud->LimitBreak);
+            if (ImGui::InputFloat("##limitbreak1", &stats.LimitBreak))
+                bUpdateStats = true;
             ImGui::SameLine();
-            if (ImGui::Button("MAX##Limit")) g_GameData->Cloud->LimitBreak = (float)1000;
+            if (ImGui::Button("MAX##Limit"))
+            {
+                stats.SetMaxLimit();
+                bUpdateStats = true;
+            }
             ImGui::SameLine();
             ImGui::Text("LimitBreak");
 
-            ImGui::InputInt("##experience", &g_GameData->Cloud->ExperiencePoints);
+            if (ImGui::InputInt("##experience", &stats.XP))
+                bUpdateStats = true;
             ImGui::SameLine();
             ImGui::Text("XP");
 
-            ImGui::InputInt("##Attack1", &g_GameData->Cloud->Attack);
+            if (ImGui::InputInt("##Attack1", &stats.Attack))
+                bUpdateStats = true;
             ImGui::SameLine();
             ImGui::Text("Attack");
 
-            ImGui::InputInt("##MagicAttack1", &g_GameData->Cloud->MagicAttack);
+            if (ImGui::InputInt("##MagicAttack1", &stats.MagicAtk))
+                bUpdateStats = true;
             ImGui::SameLine();
             ImGui::Text("MagicAttack");
 
-            ImGui::InputInt("##Defense1", &g_GameData->Cloud->Defense);
+            if (ImGui::InputInt("##Defense1", &stats.Defense))
+                bUpdateStats = true;
             ImGui::SameLine();
             ImGui::Text("Defense");
 
-            ImGui::InputInt("##MagicDefense1", &g_GameData->Cloud->MagicDefense);
+            if (ImGui::InputInt("##MagicDefense1", &stats.MagicDef))
+                bUpdateStats = true;
             ImGui::SameLine();
             ImGui::Text("MagicDefense");
 
-            ImGui::InputInt("##Strength1", &g_GameData->Cloud->Strength);
+            if (ImGui::InputInt("##Strength1", &attributes.Strength))
+                bUpdateAttributes = true;
             ImGui::SameLine();
             ImGui::Text("Strength");
 
-            ImGui::InputInt("##Magic1", &g_GameData->Cloud->Magic);
+            if (ImGui::InputInt("##Magic1", &attributes.Magic))
+                bUpdateAttributes = true;
             ImGui::SameLine();
             ImGui::Text("Magic");
 
-            ImGui::InputInt("##Vitality1", &g_GameData->Cloud->Vitality);
+            if (ImGui::InputInt("##Vitality1", &attributes.Vitality))
+                bUpdateAttributes = true;
             ImGui::SameLine();
             ImGui::Text("Vitality");
 
-            ImGui::InputInt("##Spirit1", &g_GameData->Cloud->Spirit);
+            if (ImGui::InputInt("##Spirit1", &attributes.Spirit))
+                bUpdateAttributes = true;
             ImGui::SameLine();
             ImGui::Text("Spirit");
 
-            ImGui::InputInt("##Luck1", &g_GameData->Cloud->Luck);
+            if (ImGui::InputInt("##Luck1", &stats.Luck))
+                bUpdateStats = true;
             ImGui::SameLine();
             ImGui::Text("Luck");
 
-            ImGui::Spacing();
-            ImGui::Separator();
-            ImGui::Spacing();
+            if (bUpdateStats)
+            {
+                if (index == -1)
+                    pGameState->SetCloudStats(stats);
+                else
+                    pGameState->SetPlayerStats(index, stats);
+            }
 
-            ImGui::TextCentered("CHEATS");
-            if (ImGui::Toggle("INFINITE HP", &g_GameVariables->bINFHEALTH)) g_Console->LogEvent("Stats::InfiniteHealth ; ", g_GameVariables->bINFHEALTH);
-            if (ImGui::Toggle("INFINITE MP", &g_GameVariables->bINFMAGIC)) g_Console->LogEvent("Stats::InfiniteMagic ; ", g_GameVariables->bINFMAGIC);
-            if (ImGui::Toggle("INFINITE LIMIT", &g_GameVariables->bINFLIMIT)) g_Console->LogEvent("Stats::InfiniteLIMIT ; ", g_GameVariables->bINFLIMIT);
-            if (ImGui::Toggle("INFINITE ATB", &g_GameVariables->bINFATB)) g_Console->LogEvent("Stats::InfiniteATB ; ", g_GameVariables->bINFATB);
-        }
-
-        void STATParty2()
-        {
-            ImGui::TextCentered("PLAYER STATS");
-            ImGui::Spacing();
-
-            ImGui::InputInt("##HP1", &g_GameData->Party2->HP);
-            ImGui::SameLine();
-            ImGui::Text("HP (%d/%d)", g_GameData->Party2->HP, g_GameData->Party2->MaxHP);
-
-            ImGui::InputInt("##MP1", &g_GameData->Party2->MP);
-            ImGui::SameLine();
-            ImGui::Text("MP (%d/%d)", g_GameData->Party2->MP, g_GameData->Party2->MaxMP);
-
-            ImGui::InputInt("##Attack1", &g_GameData->Party2->Attack);
-            ImGui::SameLine();
-            ImGui::Text("Attack");
-
-            ImGui::InputInt("##MagicAttack1", &g_GameData->Party2->MagicAttack);
-            ImGui::SameLine();
-            ImGui::Text("MagicAttack");
-
-            ImGui::InputInt("##Defense1", &g_GameData->Party2->Defense);
-            ImGui::SameLine();
-            ImGui::Text("Defense");
-
-            ImGui::InputInt("##MagicDefense1", &g_GameData->Party2->MagicDefense);
-            ImGui::SameLine();
-            ImGui::Text("MagicDefense");
-
-            ImGui::InputInt("##Strength1", &g_GameData->Party2->Strength);
-            ImGui::SameLine();
-            ImGui::Text("Strength");
-
-            ImGui::InputInt("##Magic1", &g_GameData->Party2->Magic);
-            ImGui::SameLine();
-            ImGui::Text("Magic");
-
-            ImGui::InputInt("##Vitality1", &g_GameData->Party2->Vitality);
-            ImGui::SameLine();
-            ImGui::Text("Vitality");
-
-            ImGui::InputInt("##Spirit1", &g_GameData->Party2->Spirit);
-            ImGui::SameLine();
-            ImGui::Text("Spirit");
-
-            ImGui::InputInt("##Luck1", &g_GameData->Party2->Luck);
-            ImGui::SameLine();
-            ImGui::Text("Luck");
-        }
-
-        void STATParty3()
-        {
-            ImGui::TextCentered("PLAYER STATS");
-            ImGui::Spacing();
-
-            ImGui::InputInt("##HP1", &g_GameData->Party3->HP);
-            ImGui::SameLine();
-            ImGui::Text("HP (%d/%d)", g_GameData->Party3->HP, g_GameData->Party3->MaxHP);
-
-            ImGui::InputInt("##MP1", &g_GameData->Party3->MP);
-            ImGui::SameLine();
-            ImGui::Text("MP (%d/%d)", g_GameData->Party3->MP, g_GameData->Party3->MaxMP);
-
-            ImGui::InputInt("##Attack1", &g_GameData->Party3->Attack);
-            ImGui::SameLine();
-            ImGui::Text("Attack");
-
-            ImGui::InputInt("##MagicAttack1", &g_GameData->Party3->MagicAttack);
-            ImGui::SameLine();
-            ImGui::Text("MagicAttack");
-
-            ImGui::InputInt("##Defense1", &g_GameData->Party3->Defense);
-            ImGui::SameLine();
-            ImGui::Text("Defense");
-
-            ImGui::InputInt("##MagicDefense1", &g_GameData->Party3->MagicDefense);
-            ImGui::SameLine();
-            ImGui::Text("MagicDefense");
-
-            ImGui::InputInt("##Strength1", &g_GameData->Party3->Strength);
-            ImGui::SameLine();
-            ImGui::Text("Strength");
-
-            ImGui::InputInt("##Magic1", &g_GameData->Party3->Magic);
-            ImGui::SameLine();
-            ImGui::Text("Magic");
-
-            ImGui::InputInt("##Vitality1", &g_GameData->Party3->Vitality);
-            ImGui::SameLine();
-            ImGui::Text("Vitality");
-
-            ImGui::InputInt("##Spirit1", &g_GameData->Party3->Spirit);
-            ImGui::SameLine();
-            ImGui::Text("Spirit");
-
-            ImGui::InputInt("##Luck1", &g_GameData->Party3->Luck);
-            ImGui::SameLine();
-            ImGui::Text("Luck");
-        }
-
-        void STATParty4()
-        {
-            ImGui::TextCentered("PLAYER STATS");
-            ImGui::Spacing();
-
-            ImGui::InputInt("##HP1", &g_GameData->Party4->HP);
-            ImGui::SameLine();
-            ImGui::Text("HP (%d/%d)", g_GameData->Party4->HP, g_GameData->Party4->MaxHP);
-
-            ImGui::InputInt("##MP1", &g_GameData->Party4->MP);
-            ImGui::SameLine();
-            ImGui::Text("MP (%d/%d)", g_GameData->Party4->MP, g_GameData->Party4->MaxMP);
-
-            ImGui::InputInt("##Attack1", &g_GameData->Party4->Attack);
-            ImGui::SameLine();
-            ImGui::Text("Attack");
-
-            ImGui::InputInt("##MagicAttack1", &g_GameData->Party4->MagicAttack);
-            ImGui::SameLine();
-            ImGui::Text("MagicAttack");
-
-            ImGui::InputInt("##Defense1", &g_GameData->Party4->Defense);
-            ImGui::SameLine();
-            ImGui::Text("Defense");
-
-            ImGui::InputInt("##MagicDefense1", &g_GameData->Party4->MagicDefense);
-            ImGui::SameLine();
-            ImGui::Text("MagicDefense");
-
-            ImGui::InputInt("##Strength1", &g_GameData->Party4->Strength);
-            ImGui::SameLine();
-            ImGui::Text("Strength");
-
-            ImGui::InputInt("##Magic1", &g_GameData->Party4->Magic);
-            ImGui::SameLine();
-            ImGui::Text("Magic");
-
-            ImGui::InputInt("##Vitality1", &g_GameData->Party4->Vitality);
-            ImGui::SameLine();
-            ImGui::Text("Vitality");
-
-            ImGui::InputInt("##Spirit1", &g_GameData->Party4->Spirit);
-            ImGui::SameLine();
-            ImGui::Text("Spirit");
-
-            ImGui::InputInt("##Luck1", &g_GameData->Party4->Luck);
-            ImGui::SameLine();
-            ImGui::Text("Luck");
+            if (bUpdateAttributes)
+            {
+                if (index == -1)
+                    pGameState->SetCloudAttributes(attributes);
+                else
+                    pGameState->SetPlayerAttributes(index, attributes);
+            }
         }
     }
 
-	namespace Tabs {
+    namespace Stats 
+    {
+        void Stats()
+        {
+            AGameState* pGameState = CGlobal::gGameBase->GetGameState();
+            if (!pGameState)
+                return;
+
+            static int selected_index{ 0 };
+            ImGui::Combo("PARTY MEMBER", &selected_index, stats_party, IM_ARRAYSIZE(stats_party));
+            ImGui::Separator();
+
+            static int index;
+            if (selected_index == 0)
+                index = -1;
+            else
+                index = selected_index - 1;
+
+            Widgets::StatsEditor(pGameState, index);
+        }
+    }
+
+	namespace Tabs 
+    {
         void TABMain()
         {
-            ImGui::TextCentered("PLAYER SELECT");
-            ImGui::Combo("##ComboLabel", &SELECTED_ITEM, ITEMS, IM_ARRAYSIZE(ITEMS));
-            ImGui::Separator();
-            switch (SELECTED_ITEM) {
-            case(0):
-                Stats::STATCloud();
-                break;
-            case(1):
-                Stats::STATParty2();
-                break;
-            case(2):
-                Stats::STATParty3();
-                break;
-            case(3):
-                Stats::STATParty4();
-                break;
-            }
+            ImGui::TextCentered("CHEATS");
+            ImGui::Toggle("NULLIFY DAMAGE", &g_GameData->bNullDmg);
+            ImGui::Toggle("DEMI GOD", &g_GameData->bDemiGod);
+            ImGui::Toggle("DEMI GOD MAGIC", &g_GameData->bDemiGodMagic);
+            ImGui::Toggle("ALWAYS LIMIT", &g_GameData->bMaxLimit);
+            ImGui::Toggle("ALWAYS ATB", &g_GameData->bMaxATB);
+
+            ImGui::Toggle("PAUSE GAME w/ MENU", &g_GameData->bPauseGame);
+            if (ImGui::Toggle("MODIFY TIME SCALE", &g_GameData->bModTimeScale) && !g_GameData->bModTimeScale)
+                g_GameData->fTimeScale = 1.0f;
+            if (g_GameData->bModTimeScale)
+                ImGui::SliderFloat("TIME SCALE", &g_GameData->fTimeScale, 0.0f, 1.0f, "%.2f");
+
         }
 
-        void TABItem()
+        void TABStats()
         {
-            ImGui::InputInt("##POTION1", &g_GameData->Cloud->HP);
-            ImGui::SameLine();
-            if (ImGui::Button("POTION##HP")) g_GameData->Cloud->HP = g_GameData->Cloud->MaxHP;
-            ImGui::SameLine();
-            ImGui::Text("POTIONS (%d)", g_GameData->Cloud->HP);
+            Stats::Stats();
         }
 
         void TABAbout()
         {
             ImGui::Text("BASE MENU (PREVIEW)");
-            ImGui::Text("BUILD VERSION: v1.1");
-            ImGui::Text("BUILD DATE: 6/22/2022");
-            if (ImGui::Checkbox("RGB MODE", &g_Menu->dbg_RAINBOW_THEME)) g_Console->LogEvent("Menu::RainbowTheme ; ", g_Menu->dbg_RAINBOW_THEME);
-            if (ImGui::Checkbox("SHOW IMGUI DEMO", &g_GameVariables->m_ShowDemo)) g_Console->LogEvent("Menu::ShowImGuiDemo ; ", g_GameVariables->m_ShowDemo);
-#if DEBUG
+            ImGui::Text("BUILD VERSION: v1.2");
+            ImGui::Text("BUILD DATE: 5/22/2024");
+            if (ImGui::Checkbox("SHOW IMGUI DEMO", &g_GameData->m_ShowDemo)) g_Console->LogEvent("Menu::ShowImGuiDemo ; ", g_GameData->m_ShowDemo);
+#if _DEBUG
             if (ImGui::Checkbox("SHOW CONSOLE", &g_Console->m_ShowConsole)) g_Console->LogEvent("Console::ShowWindow ; ", g_Console->m_ShowConsole);
             if (ImGui::Checkbox("VERBOSE LOGGING", &g_Console->verbose)) g_Console->LogEvent("Console::VerboseLogging ; ", g_Console->verbose);
 #endif
@@ -370,47 +269,43 @@ namespace FF7Remake {
             ImGui::Separator();
             ImGui::Spacing();
 
-            if (ImGui::Button("UNHOOK DLL", ImVec2(ImGui::GetWindowContentRegionWidth() - 3, 20))) {
-#if DEBUG
+            if (ImGui::Button("UNHOOK DLL", ImVec2(ImGui::GetWindowContentRegionWidth() - 3, 20))) 
+            {
+#if _DEBUG
                 g_Console->printdbg("\n\n[+] UNHOOK INITIALIZED [+]\n\n", g_Console->color.red);
 #endif
 
-                //  Restore PauseGame Patch
-                if (*(int8_t*)(og_GameBase + g_GameData->offsets.aPauseGame) == 117)
-                    g_GameData->Patch(g_GameData->offsets.aPauseGame, (BYTE*)"\x74\x1F", 2);
-                g_GameVariables->m_ShowMenu = FALSE;
-                og_Killswitch = TRUE;
+                g_GameData->m_ShowMenu = false;
+                og_Killswitch = true;
             }
         }
 	}
 
 	void Menu::Draw()
 	{
-        if (!g_GameVariables->m_ShowDemo)
+        if (!g_GameData->m_ShowDemo)
             Styles::InitStyle();
 
-        if (g_GameVariables->m_ShowMenu)
+        if (g_GameData->m_ShowMenu)
             MainMenu();
 
-        //  Currently Unused
-		if (g_GameVariables->m_ShowHud)
+		if (g_GameData->m_ShowHud)
 			HUD();
 
-		if (g_GameVariables->m_ShowDemo)
+		if (g_GameData->m_ShowDemo)
 			ImGui::ShowDemoWindow();
 
-        //  Switch for showing and hiding the console
         switch (g_Console->m_ShowConsole) {
-        case(TRUE):
+        case(true):
             if (!g_Console->ACTIVE) {
                 ShowWindow(g_Console->g_hWnd, SW_SHOW);
-                g_Console->ACTIVE = TRUE;
+                g_Console->ACTIVE = true;
             }
             break;
-        case(FALSE):
+        case(false):
             if (g_Console->ACTIVE) {
                 ShowWindow(g_Console->g_hWnd, SW_HIDE);
-                g_Console->ACTIVE = FALSE;
+                g_Console->ACTIVE = false;
             }
             break;
         }
@@ -418,21 +313,13 @@ namespace FF7Remake {
 
 	void Menu::MainMenu()
 	{
-        if (g_Menu->dbg_RAINBOW_THEME) {
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(g_Menu->dbg_RAINBOW));
-            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(g_Menu->dbg_RAINBOW));
-            ImGui::PushStyleColor(ImGuiCol_BorderShadow, ImVec4(g_Menu->dbg_RAINBOW));
-        }
-        if (!ImGui::Begin("Final Fantasy 7", &g_GameVariables->m_ShowMenu, 96 | ImGuiWindowFlags_NoTitleBar))
+
+        if (!ImGui::Begin("Final Fantasy 7", &g_GameData->m_ShowMenu, 96 | ImGuiWindowFlags_NoTitleBar))
         {
             ImGui::End();
             return;
         }
-        if (g_Menu->dbg_RAINBOW_THEME) {
-            ImGui::PopStyleColor();
-            ImGui::PopStyleColor();
-            ImGui::PopStyleColor();
-        }
+
 
         if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None))
         {
@@ -441,6 +328,13 @@ namespace FF7Remake {
                 Tabs::TABMain();
                 ImGui::EndTabItem();
             }
+
+            if (ImGui::BeginTabItem("STATS"))
+            {
+                Tabs::TABStats();
+                ImGui::EndTabItem();
+            }
+
             if (ImGui::BeginTabItem("DEBUG"))
             {
                 Tabs::TABAbout();
@@ -454,7 +348,7 @@ namespace FF7Remake {
 	void Menu::HUD()
 	{
         ImGui::SetNextWindowPos(ImVec2(10, 10));
-        if (!ImGui::Begin("FFVii Internal Launch Window", NULL, 103))
+        if (!ImGui::Begin("FFVii Internal Launch Window", 0, 103))
         {
             ImGui::End();
             return;
@@ -463,46 +357,22 @@ namespace FF7Remake {
         ImGui::Text("FINAL FANTASY VII INTERNAL MENU LOADED");
         ImGui::Text("PRESS [INSERT] OR [L3 + R3] TO SHOW THE MENU");
         ImGui::Separator();
-        ImGui::TextColored(ImColor(255, 0, 0, 255), "MENU v1.1 | Released: Wednesday June 22, 2022");
+        ImGui::TextColored(ImColor(255, 0, 0, 255), "MENU v1.2 | Released: May 23, 2024");
         ImGui::End();
 	}
 
-    int VALUE = NULL;
-    bool bPAUSE = FALSE;
 	void Menu::Loops()
 	{
-        //  Check if menu is shown, then check value of our pause instruction
-        //  Basically this will pause and unpause the game for us
-        switch (g_GameVariables->m_ShowMenu) {
-        case(TRUE):
-            VALUE = *(int8_t*)(og_GameBase + g_GameData->offsets.aPauseGame);
-            if (VALUE == 116 && !bPAUSE) {
-                g_GameData->Patch(g_GameData->offsets.aPauseGame, (BYTE*)"\x75\x1F", 2);
-                bPAUSE = TRUE;
-            };
-            break;
-        case(FALSE):
-            VALUE = *(int8_t*)(og_GameBase + g_GameData->offsets.aPauseGame);
-            if (VALUE == 117 && bPAUSE) {
-                g_GameData->Patch(g_GameData->offsets.aPauseGame, (BYTE*)"\x74\x1F", 2);
-                bPAUSE = FALSE;
-            };
-            break;
-        }
+        if (g_GameData->bDemiGod)
+            Patches::RefillCloudHP();
 
-        // - You can die if you take more damage than maximum hp
-        if (g_GameVariables->bINFHEALTH)
-            g_GameData->Cloud->HP = g_GameData->Cloud->MaxHP;
+        if (g_GameData->bDemiGodMagic)
+            Patches::RefillCloudMP();
 
-        // - You cannot use magic if it requires more MP than maximum mp
-        if (g_GameVariables->bINFMAGIC)
-            g_GameData->Cloud->MP = g_GameData->Cloud->MaxMP;
+        if (g_GameData->bMaxLimit)
+            Patches::CloudMaxLimit();
 
-        // - These values may change as the game progresses
-        if (g_GameVariables->bINFLIMIT)
-            g_GameData->Cloud->LimitBreak = 1000;
-
-        if (g_GameVariables->bINFATB)
-            g_GameData->Cloud->ATB = 2000;
+        if (g_GameData->bMaxATB)
+            Patches::CloudMaxATB();
 	}
 }
