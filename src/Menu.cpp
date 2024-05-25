@@ -2,12 +2,8 @@
 #include "Engine.h"
 #include "Game.h"
 
-
-static const char* stats_party[]{ "CLOUD", "PARTY SLOT 2", "PARTY SLOT 3", "PARTY SLOT 4", "PARTY SLOT 5"};
-
 namespace FF7Remake 
 {
-
 	namespace Styles 
     {
         void InitStyle()
@@ -123,7 +119,7 @@ namespace FF7Remake
             ImGui::SameLine();
             ImGui::Text("MP (%d/%d)", stats.MP, stats.MaxMP);
 
-            if (ImGui::InputFloat("##atb1", &stats.ATB))
+            if (ImGui::InputFloat("##atb1", &stats.ATB, 1.0f, 100.f, "%.2f"))
                 bUpdateStats = true;
             ImGui::SameLine();
             if (ImGui::Button("MAX##ATB"))
@@ -134,7 +130,7 @@ namespace FF7Remake
             ImGui::SameLine();
             ImGui::Text("ATB");
 
-            if (ImGui::InputFloat("##limitbreak1", &stats.LimitBreak))
+            if (ImGui::InputFloat("##limitbreak1", &stats.LimitBreak, 1.0f, 100.f, "%.2f"))
                 bUpdateStats = true;
             ImGui::SameLine();
             if (ImGui::Button("MAX##Limit"))
@@ -222,48 +218,63 @@ namespace FF7Remake
                 return;
 
             static int selected_index{ 0 };
+            static const char* stats_party[]{ "CLOUD", "PARTY SLOT 2", "PARTY SLOT 3", "PARTY SLOT 4", "PARTY SLOT 5" };
             ImGui::Combo("PARTY MEMBER", &selected_index, stats_party, IM_ARRAYSIZE(stats_party));
             ImGui::Separator();
 
             int index = (selected_index - 1);
-            //  if (selected_index == 0)
-            //      index = -1;
-            //  else
-            //      index = selected_index - 1;
-
             Widgets::StatsEditor(pGameState, index);
         }
     }
 
 	namespace Tabs 
     {
-        void TABMain()
+        void TABplayer()
         {
-            ImGui::TextCentered("CHEATS");
-            ImGui::Toggle("NULLIFY DAMAGE", &AGame::bNullDmg);
             ImGui::Toggle("DEMI GOD", &AGame::bDemiGod);
-            ImGui::Toggle("DEMI GOD MAGIC", &AGame::bDemiGodMagic);
-            ImGui::Toggle("ALWAYS LIMIT", &AGame::bMaxLimit);
-            ImGui::Toggle("ALWAYS ATB", &AGame::bMaxATB);
+            ImGui::Toggle("DEMI MANA", &AGame::bDemiGodMagic);
+            ImGui::Toggle("MAX LIMIT", &AGame::bMaxLimit);
+            ImGui::Toggle("MAX ATB", &AGame::bMaxATB);
+            ImGui::Toggle("NO HP LOSS", &AGame::bNullDmg);
+            ImGui::Toggle("NO MANA LOSS", &AGame::bNullMgk);
+            ImGui::Toggle("NO ITEM LOSS", &AGame::bNullItem);
+            ImGui::Toggle("XP MOD", &AGame::bXpFarm);
 
-            ImGui::Toggle("PAUSE GAME w/ MENU", &AGame::bPauseGame);
             if (ImGui::Toggle("MODIFY TIME SCALE", &AGame::bModTimeScale) && !AGame::bModTimeScale)
-                AGame::fTimeScale = 1.0f;
+                AGame::fTimeScalar = 1.0f;
             if (AGame::bModTimeScale)
-                ImGui::SliderFloat("TIME SCALE", &AGame::fTimeScale, 0.0f, 1.0f, "%.2f");
+                ImGui::SliderFloat("##TIME SCALE", &AGame::fTimeScalar, 0.0f, 1.0f, "%.2f");
+        }
+
+        void TABitems()
+        {
 
         }
 
-        void TABStats()
+        void TABstats()
         {
             Stats::Stats();
         }
 
-        void TABAbout()
+        void TABenemies()
+        {
+
+            ImGui::Toggle("STUPIFY", &AGame::bNoTargetAttack);
+            ImGui::Toggle("NO DAMAGE", &AGame::bNullTargetDmg);
+            ImGui::Toggle("AUTO STAGGER", &AGame::bTargetAlwaysStagger);
+            ImGui::Toggle("1 HIT KILLS", &AGame::bKillTarget);
+            ImGui::Toggle("MODIFY LEVEL", &AGame::bModTargetLevel);
+            if (AGame::bModTargetLevel)
+                ImGui::InputInt("LEVEL", &AGame::iLevelScalar);
+
+        }
+        
+        void TABoptions()
         {
             ImGui::Text("BASE MENU (PREVIEW)");
             ImGui::Text("BUILD VERSION: v1.2");
             ImGui::Text("BUILD DATE: 5/22/2024");
+            ImGui::Checkbox("PAUSE GAME", &AGame::bPauseGame);
             ImGui::Checkbox("SHOW IMGUI DEMO", &g_Engine->m_ShowDemo);
 #if _DEBUG
             //  ImGui::Checkbox("SHOW CONSOLE", &g_Console->m_ShowConsole);
@@ -280,6 +291,10 @@ namespace FF7Remake
         }
 	}
 
+    //----------------------------------------------------------------------------------------------------
+    //										MENU
+    //-----------------------------------------------------------------------------------
+
 	void Menu::Draw()
 	{
         if (!g_Engine->m_ShowDemo)
@@ -295,8 +310,8 @@ namespace FF7Remake
 			ImGui::ShowDemoWindow();
 	}
 
-	void Menu::MainMenu()
-	{
+    void Menu::MainMenu()
+    {
         if (!ImGui::Begin("Final Fantasy 7 Remake", &g_Engine->m_ShowMenu, 96 | ImGuiWindowFlags_NoTitleBar))
         {
             ImGui::End();
@@ -306,21 +321,33 @@ namespace FF7Remake
 
         if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None))
         {
-            if (ImGui::BeginTabItem("MAIN"))
+            if (ImGui::BeginTabItem("PLAYER"))
             {
-                Tabs::TABMain();
+                Tabs::TABplayer();
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("ITEMS"))
+            {
+                Tabs::TABitems();
                 ImGui::EndTabItem();
             }
 
             if (ImGui::BeginTabItem("STATS"))
             {
-                Tabs::TABStats();
+                Tabs::TABstats();
                 ImGui::EndTabItem();
             }
 
-            if (ImGui::BeginTabItem("DEBUG"))
+            if (ImGui::BeginTabItem("ENEMIES"))
             {
-                Tabs::TABAbout();
+                Tabs::TABenemies();
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("OPTIONS"))
+            {
+                Tabs::TABoptions();
                 ImGui::EndTabItem();
             }
 
@@ -361,4 +388,87 @@ namespace FF7Remake
         if (AGame::bMaxATB)
             AGame::Patches::CloudMaxATB();
 	}
+
+    //----------------------------------------------------------------------------------------------------
+    //										GUI
+    //-----------------------------------------------------------------------------------
+
+    void GUI::TextCentered(const char* pText)
+    {
+        ImVec2 textSize = ImGui::CalcTextSize(pText);
+        ImVec2 windowSize = ImGui::GetWindowSize();
+        ImVec2 textPos = ImVec2((windowSize.x - textSize.x) * 0.5f, (windowSize.y - textSize.y) * 0.5f);
+        ImGui::SetCursorPos(textPos);
+        ImGui::Text("%s", pText);
+    }
+
+    //  @ATTN: max buffer is 256chars
+    void GUI::TextCenteredf(const char* pText, ...)
+    {
+        va_list args;
+        va_start(args, pText);
+        char buffer[256];
+        vsnprintf(buffer, sizeof(buffer), pText, args);
+        va_end(args);
+
+        TextCentered(buffer);
+    }
+
+    void GUI::DrawText_(ImVec2 pos, ImColor color, const char* pText, float fontSize)
+    {
+        ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), fontSize, pos, color, pText, pText + strlen(pText), 800, 0);
+    }
+
+    //  @ATTN: max buffer is 256chars
+    void GUI::DrawTextf(ImVec2 pos, ImColor color, const char* pText, float fontSize, ...)
+    {
+        va_list args;
+        va_start(args, fontSize);
+        char buffer[256];
+        vsnprintf(buffer, sizeof(buffer), pText, args);
+        va_end(args);
+
+        DrawText_(pos, color, buffer, fontSize);
+    }
+
+    void GUI::DrawTextCentered(ImVec2 pos, ImColor color, const char* pText, float fontSize)
+    {
+        float textSize = ImGui::CalcTextSize(pText).x;
+        ImVec2 textPosition = ImVec2(pos.x - (textSize * 0.5f), pos.y);
+        DrawText_(textPosition, color, pText, fontSize);
+    }
+
+    //  @ATTN: max buffer is 256chars
+    void GUI::DrawTextCenteredf(ImVec2 pos, ImColor color, const char* pText, float fontSize, ...)
+    {
+        va_list args;
+        va_start(args, fontSize);
+        char buffer[256];
+        vsnprintf(buffer, sizeof(buffer), pText, args);
+        va_end(args);
+
+        DrawTextCentered(pos, color, pText, fontSize);
+    }
+
+    //  @ATTN: max buffer is 256chars
+    void GUI::DrawTextWindow(ImVec2 pos, const char* fmt, ...)
+    {
+
+        va_list args;
+        va_start(args, fmt);
+        char buffer[256];
+        vsnprintf(buffer, sizeof(buffer), fmt, args);
+        va_end(args);
+
+        ImGui::SetNextWindowPos(pos);
+        if (!ImGui::Begin(std::string("##").append(buffer).c_str(), 0, 103))
+        {
+            ImGui::End();
+            return;
+        }
+
+        ImGui::Text("%s", buffer);
+
+        ImGui::End();
+    }
 }

@@ -12,13 +12,14 @@ namespace FF7Remake
 	bool											AGame::bNullMgk{ false };
 	bool											AGame::bNullItem{ false };
 	bool											AGame::bModTimeScale{ false };
-	float											AGame::fTimeScale{ 1.0f };
-	bool											AGame::bMaxTargetLevel{ false };
+	float											AGame::fTimeScalar{ 1.0f };
+	bool											AGame::bModTargetLevel{ false };
+	int												AGame::iLevelScalar{ 1 };
 	bool											AGame::bKillTarget{ false };
 	bool											AGame::bNoTargetAttack{ false };		//	target doesnt attack
 	bool											AGame::bNullTargetDmg{ false };			//	target takes no damage
 	bool											AGame::bTargetAlwaysStagger{ false };	//	target defense is set to 0
-	bool											AGame::bXpFarn{ false };				//	sets targets hp to 0, prevents targets from attacking , sets target stagger to max and sets target to max level for max reward
+	bool											AGame::bXpFarm{ false };				//	sets targets hp to 0, prevents targets from attacking , sets target stagger to max and sets target to max level for max reward
 	__int64											AGame::Hooks::pXInput_State{ 0 };
 	__int64											AGame::Hooks::pAScene_Update{ 0 };
 	__int64											AGame::Hooks::pAPlayerState_SetHealth{ 0 };
@@ -34,9 +35,9 @@ namespace FF7Remake
 	AGame::Hooks::ATargetEntity_GetHP				AGame::Hooks::ATargetEntity_GetHP_stub;
 	AGame::Hooks::ATargetEntity_GetStaggerAmount	AGame::Hooks::ATargetEntity_GetStaggerAmount_stub;
 
-	//
-	//	AGame
-	//
+	//----------------------------------------------------------------------------------------------------
+	//										AGAME
+	//-----------------------------------------------------------------------------------
 #pragma region	//	AGAME
 
 	void AGame::InitGame()
@@ -106,6 +107,13 @@ namespace FF7Remake
 			Hooking::DisableHook((LPVOID)Hooks::pATargetEntity_GetStaggerAmount);
 	}
 
+#pragma endregion
+
+	//----------------------------------------------------------------------------------------------------
+	//										AGAME::PATCHES
+	//-----------------------------------------------------------------------------------
+#pragma region	//	AGAME::PATCHES
+
 	void AGame::Patches::RefillCloudHP()
 	{
 		AGameState* pGameState = gGameBase->GetGameState();
@@ -162,11 +170,79 @@ namespace FF7Remake
 		pGameState->SetCloudStats(cloud_stats);
 	}
 
+	void AGame::Patches::RefillPartyHP()
+	{
+		AGameState* pGameState = gGameBase->GetGameState();
+		if (!pGameState)
+			return;
+
+		for (int i = 0; i < 2; i++)
+		{
+			APlayerStats player_stats = pGameState->GetPlayerStats(i);
+			player_stats.RefillHP();
+
+			pGameState->SetPlayerStats(i, player_stats);
+		}
+
+		RefillCloudHP();
+	}
+
+	void AGame::Patches::RefillPartyMP()
+	{
+		AGameState* pGameState = gGameBase->GetGameState();
+		if (!pGameState)
+			return;
+
+		for (int i = 0; i < 2; i++)
+		{
+			APlayerStats player_stats = pGameState->GetPlayerStats(i);
+			player_stats.RefillMana();
+
+			pGameState->SetPlayerStats(i, player_stats);
+		}
+
+		RefillCloudMP();
+	}
+
+	void AGame::Patches::PartyMaxLimit()
+	{
+		AGameState* pGameState = gGameBase->GetGameState();
+		if (!pGameState)
+			return;
+		
+		for (int i = 0; i < 2; i++)
+		{
+			APlayerStats player_stats = pGameState->GetPlayerStats(i);
+			player_stats.SetMaxLimit();
+				
+			pGameState->SetPlayerStats(i, player_stats);
+		}
+
+		CloudMaxLimit();
+	}
+
+	void AGame::Patches::PartyMaxATB()
+	{
+		AGameState* pGameState = gGameBase->GetGameState();
+		if (!pGameState)
+			return;
+
+		for (int i = 0; i < 2; i++)
+		{
+			APlayerStats player_stats = pGameState->GetPlayerStats(i);
+			player_stats.SetMaxATB();
+
+			pGameState->SetPlayerStats(i, player_stats);
+		}
+
+		CloudMaxATB();
+	}
+
 #pragma endregion
 
-	//
-	//	AGame::Hooks
-	//
+	//----------------------------------------------------------------------------------------------------
+	//										AGAME::HOOKS
+	//-----------------------------------------------------------------------------------
 #pragma region	//	AGAME::HOOKS
 
 	//	
@@ -215,6 +291,7 @@ namespace FF7Remake
 		auto pScene = reinterpret_cast<AScene*>(p);
 		if (pScene && g_Engine->m_ShowMenu)
 		{
+			//	@TODO: this doesnt make the pause menu show up , however setting this flag requires the user to manually unpause the game. 
 			//	pScene->SetPauseState(true);
 			pScene->SetTimeScale(0.00f);
 		}
@@ -223,7 +300,7 @@ namespace FF7Remake
 			pScene->SetTimeScale(pScene->GetTimeScale() * 0.0f);
 
 		if (pScene && AGame::bModTimeScale)
-			pScene->SetTimeScale(AGame::fTimeScale);
+			pScene->SetTimeScale(AGame::fTimeScalar);
 
 		//	exec original fn
 		AScene_Update_stub(p);
@@ -617,69 +694,56 @@ namespace FF7Remake
 	//	
 	__int64 AGame::Hooks::ATargetEntity_GetHP_hook(__int64 p)
 	{
-		static bool bEditing{ false };	//	used so can call this function without stack overflow
+		static bool bEditing{ false };	//	used so can call this function [ pTarget->GetHP() ] // recursion safety
 		auto pTarget = reinterpret_cast<ATarget*>(p);
 		if (!bEditing && pTarget && pTarget->IsValid())
 		{
 			bEditing = true;
 
+			//	target level is adjusted
+			if (AGame::bModTargetLevel)
+				pTarget->SetLevel(iLevelScalar);
+
 			//	target health is restored ( note: target can still die if damage taken is > maxhp )
 			if (AGame::bNullTargetDmg)
-			{
-				auto hp_max = pTarget->GetHPMax();
-				auto hp = pTarget->GetHP();	//	recursion
-				if (hp < hp_max)
-					pTarget->SetHP(hp_max);
-			}
-
-			//	target is killed
-			if (AGame::bKillTarget)
-			{
-				//	if (g_GameData->bMaxTargetLevel)
-				//	{
-				if (pTarget->GetLevel() != 9999)
-					pTarget->SetLevel(9999);
-				//	g_GameData->bMaxTargetLevel = false;
-			//	}
-
-				if (pTarget->GetHP() > 0)
-					pTarget->SetHP(0);
-
-				AGame::bKillTarget = false;
-			}
+				pTarget->SetHP(pTarget->GetHPMax());
 
 			//	target wont attack player
 			if (AGame::bNoTargetAttack)
 			{
-				if (pTarget->GetAttackRate() > 0.0f)
-					pTarget->SetAttackRate(0.0f);
-				if (pTarget->GetSpAtkTimeMax() > 0.0f)
-					pTarget->SetSpAtkTimeMax(0.0f);
-
-				//	g_GameData->bNoTargetAttack = false;
+				//	Attack Rate
+				pTarget->SetAttackRate(0.0f);
+				
+				//	Special Attack Timer
+				pTarget->SetSpAtkTime(0.0f);
+				
+				//	Special Attack Threshold
+				pTarget->SetSpAtkTimeMax(0.0f);
 			}
 
-			//	prevents targets from attacking , sets max level and sets health to 0
-			if (AGame::bXpFarn)
+			//	prevents targets from attacking , sets max level and sets defenses to 0
+			//	- apply Auto Kill || Auto Stagger for increased effects
+			if (AGame::bXpFarm)
 			{
-				if (pTarget->GetLevel() != 9999)
-					pTarget->SetLevel(9999);
+				//	Set Level for rewards
+				pTarget->SetLevel(9999);
 
-				if (pTarget->GetAttackRate() > 0.0f)
-					pTarget->SetAttackRate(0.0f);
+				//	prevent targets from attacking party
+				pTarget->SetAttackRate(0.0f);
 
-				if (pTarget->GetSpAtkTimeMax() > 0.0f)
-					pTarget->SetSpAtkTimeMax(0.0f);
+				//	prevent targets from using special attacks
+				pTarget->SetSpAtkTimeMax(0.0f);
 
-				if (pTarget->GetDefense() > 0)
-					pTarget->SetDefense(0);
+				//	set target defense to 0 for critical hits
+				pTarget->SetDefense(0);
 
-				if (pTarget->GetMagicDef() > 0)
-					pTarget->SetMagicDef(0);
-
-				if (pTarget->GetHP() > 0)//	recursion
-					pTarget->SetHP(0);
+				//	set target magic defense to 0 for critical magic hits
+				pTarget->SetMagicDef(0);
 			}
+
+			//	target is killed
+			if (AGame::bKillTarget)
+				pTarget->SetHP(0);
 
 			bEditing = false;
 		}
@@ -689,7 +753,7 @@ namespace FF7Remake
 	//	
 	__int64 AGame::Hooks::ATargetEntity_GetStaggerAmount_hook(__int64 a1)
 	{
-		if (AGame::bXpFarn || AGame::bTargetAlwaysStagger)
+		if (AGame::bTargetAlwaysStagger)
 		{
 			auto pEnt = reinterpret_cast<ATargetStagger*>(a1);
 			if (pEnt)
@@ -702,9 +766,9 @@ namespace FF7Remake
 
 #pragma endregion
 
-	//
-	//	AItemSlot
-	//
+	//----------------------------------------------------------------------------------------------------
+	//										AITEMSLOT
+	//-----------------------------------------------------------------------------------
 #pragma region	//	AITEMSLOT
 
 	bool AItemSlot::IsValidIndex()
@@ -720,9 +784,9 @@ namespace FF7Remake
 
 #pragma endregion
 
-	//
-	//	APlayerStats
-	//
+	//----------------------------------------------------------------------------------------------------
+	//										APLAYERSTATE
+	//-----------------------------------------------------------------------------------
 #pragma region	//	APLAYERSTATE
 
 	void APlayerStats::RefillHP() { HP = MaxHP; }
@@ -735,9 +799,9 @@ namespace FF7Remake
 
 #pragma endregion
 
-	//
-	//	ACloudState
-	//
+	//----------------------------------------------------------------------------------------------------
+	//										ACLOUDSTATE
+	//-----------------------------------------------------------------------------------
 #pragma region	//	ACLOUDSTATE
 
 	struct AGameState* ACloudState::GetGameState()
@@ -747,9 +811,9 @@ namespace FF7Remake
 
 #pragma endregion
 
-	//
-	//	AGAMESTATE
-	//
+	//----------------------------------------------------------------------------------------------------
+	//										AGAMESTATE
+	//-----------------------------------------------------------------------------------
 #pragma region	//	AGAMESTATE
 
 	struct APlayerStats AGameState::GetPlayerStats(int index) { return this->mPartyStats[index]; }
@@ -770,9 +834,9 @@ namespace FF7Remake
 
 #pragma endregion
 
-	//
-	//	AGameBase
-	//
+	//----------------------------------------------------------------------------------------------------
+	//										AGAMEBASE
+	//-----------------------------------------------------------------------------------
 #pragma region	//	AGAMEBASE
 
 	bool AGameBase::Valid() { return this->mMatchState_0 <= 2; }
@@ -789,9 +853,9 @@ namespace FF7Remake
 
 #pragma endregion
 
-	//
-	//	AScene
-	//
+	//----------------------------------------------------------------------------------------------------
+	//										ASCENE
+	//-----------------------------------------------------------------------------------
 #pragma region	//	ASCENE
 
 	void AScene::SetPauseState(bool newState) { this->bPause = newState; }
@@ -804,9 +868,9 @@ namespace FF7Remake
 
 #pragma endregion
 
-	//
-	//	OnUseItem
-	//
+	//----------------------------------------------------------------------------------------------------
+	//										ON USE ITEM
+	//-----------------------------------------------------------------------------------
 #pragma region	//	ON USE ITEM
 
 	AGameState* OnUseItem::GetGameState() { return pCloudState->GetGameState(); }
@@ -842,9 +906,9 @@ namespace FF7Remake
 
 #pragma endregion
 
-	//
-	//	OnSetHealth
-	//
+	//----------------------------------------------------------------------------------------------------
+	//										ON SET HEALTH
+	//-----------------------------------------------------------------------------------
 #pragma region	//	ON SET HEALTH
 
 	OnSetHealth::OnSetHealth() {}
@@ -876,9 +940,9 @@ namespace FF7Remake
 
 #pragma endregion
 
-	//
-	//	OnSetMana
-	//
+	//----------------------------------------------------------------------------------------------------
+	//										ON SET MANA
+	//-----------------------------------------------------------------------------------
 #pragma region	//	ON SET MANA
 
 	OnSetMana::OnSetMana() {}
@@ -910,9 +974,9 @@ namespace FF7Remake
 
 #pragma endregion
 
-	//
-	//	ATarget
-	//
+	//----------------------------------------------------------------------------------------------------
+	//										ATARGET
+	//-----------------------------------------------------------------------------------
 #pragma region	//	ATARGET
 
 	bool ATarget::IsValid()

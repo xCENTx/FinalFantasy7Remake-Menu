@@ -10,6 +10,11 @@ namespace FF7Remake
 	bool				Console::m_bGUI{ false };
 	static				uint64_t* MethodsTable{ nullptr };
 
+	//----------------------------------------------------------------------------------------------------
+	//										ENGINE
+	//-----------------------------------------------------------------------------------
+#pragma region //	ENGINE
+
 	Engine::Engine()
 	{
 		g_Console		= std::make_unique<Console>();
@@ -75,9 +80,11 @@ namespace FF7Remake
 		return false;
 	}
 
-	//
-	//	CONSOLE
-	//
+#pragma endregion
+
+	//----------------------------------------------------------------------------------------------------
+	//										CONSOLE
+	//-----------------------------------------------------------------------------------
 #pragma region //	CONSOLE
 
 	Console::Console() { }
@@ -147,17 +154,9 @@ namespace FF7Remake
 #pragma endregion
 
 
-
-	//
-	//	GAMEDATA
-	//
-#pragma region //	GAMEDATA
-
-#pragma endregion
-
-	//
-	//	D3DWINDOW
-	//
+	//----------------------------------------------------------------------------------------------------
+	//										D3DWINDOW
+	//-----------------------------------------------------------------------------------
 #pragma region	//	D3DWINDOW
 
 	D3D11Window::D3D11Window() {}
@@ -382,9 +381,9 @@ namespace FF7Remake
 #pragma endregion
 
 
-	//
-	//	HOOKING
-	//
+	//----------------------------------------------------------------------------------------------------
+	//										HOOKING
+	//-----------------------------------------------------------------------------------
 #pragma region //	HOOKING
 
 	Hooking::Hooking() 

@@ -31,6 +31,7 @@ namespace FF7Remake
 		static bool							GetKeyState(WORD v, SHORT delta);
 		static bool							GamePadGetKeyState(WORD combinationButtons);
 
+		//	constructor
 		Engine();
 		~Engine();
 	};
@@ -60,23 +61,23 @@ namespace FF7Remake
 		};
 
 	public:
-		static FILE*	m_pOutStream;
-		static bool		m_bInit;
-		static bool		m_bGUI;
-		HANDLE			m_pHandle{ 0 };
-		HWND			m_pHwnd{ 0 };
-		bool			m_bShow{ false };
-		bool			m_bVerbose{ false };
+		static FILE*						m_pOutStream;
+		static bool							m_bInit;
+		static bool							m_bGUI;
+		HANDLE								m_pHandle{ 0 };
+		HWND								m_pHwnd{ 0 };
+		bool								m_bShow{ false };
+		bool								m_bVerbose{ false };
 
 	public:
-		void			InitializeConsole(const char* title, bool bGUI = true);
-		void			cLog(const char* fmt, const EColors Color = EColor_DEFAULT, ...);
-		void			LogError(const char* fmt, ...);
-		void			DestroyConsole();
+		void								InitializeConsole(const char* title, bool bGUI = true);
+		void								cLog(const char* fmt, const EColors Color = EColor_DEFAULT, ...);
+		void								LogError(const char* fmt, ...);
+		void								DestroyConsole();
 
 	public:
-		static void		Log(const char* fmt, ...);
-		static void		Clear();
+		static void							Log(const char* fmt, ...);
+		static void							Clear();
 
 		//	constructor
 		explicit Console();
@@ -87,38 +88,37 @@ namespace FF7Remake
 	class D3D11Window
 	{
 	private:
-		WNDCLASSEX				WindowClass;
-		HWND					WindowHwnd;
-		ID3D11Device*			m_Device{};
-		ID3D11DeviceContext*	m_DeviceContext{};
-		ID3D11RenderTargetView* m_RenderTargetView{};
-		IDXGISwapChain*			m_pSwapChain{};
+		WNDCLASSEX							WindowClass;
+		HWND								WindowHwnd;
+		ID3D11Device*						m_Device{};
+		ID3D11DeviceContext*				m_DeviceContext{};
+		ID3D11RenderTargetView*				m_RenderTargetView{};
+		IDXGISwapChain*						m_pSwapChain{};
 	
 	private:
 		typedef HRESULT(APIENTRY* IDXGISwapChainPresent)(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);
 		typedef HRESULT(APIENTRY* IDXGISwapChain_ResizeBuffers)(IDXGISwapChain* p, UINT bufferCount, UINT Width, UINT Height, DXGI_FORMAT fmt, UINT scFlags);
-		static HRESULT APIENTRY Swapchain_present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);
-		static HRESULT APIENTRY Swapchain_ResizeBuffers_hook(IDXGISwapChain* p, UINT bufferCount, UINT Width, UINT Height, DXGI_FORMAT fmt, UINT scFlags);
-		static LRESULT APIENTRY WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-		IDXGISwapChainPresent Swapchain_present_stub = 0;
-		IDXGISwapChain_ResizeBuffers Swapchain_ResizeBuffers_stub = 0;
+		static HRESULT APIENTRY			Swapchain_present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);
+		static HRESULT APIENTRY			Swapchain_ResizeBuffers_hook(IDXGISwapChain* p, UINT bufferCount, UINT Width, UINT Height, DXGI_FORMAT fmt, UINT scFlags);
+		static LRESULT APIENTRY			WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		IDXGISwapChainPresent			Swapchain_present_stub = 0;
+		IDXGISwapChain_ResizeBuffers	Swapchain_ResizeBuffers_stub = 0;
 
 	public:
-		bool					m_Init{};
-		bool					b_ImGui_Initialized{};
-		WNDPROC					m_OldWndProc{};
-		ImGuiContext*			pImGui;
-		ImGuiViewport*			pViewport;
+		bool								m_Init{};
+		bool								b_ImGui_Initialized{};
+		WNDPROC								m_OldWndProc{};
+		ImGuiContext*						pImGui;
+		ImGuiViewport*						pViewport;
 
 	public:
-		bool					GetD3DContext();
-		bool					HookD3D();
-		void					UnhookD3D();
-		bool					InitWindow();
-		bool					DeleteWindow();
-		bool					InitImGui(IDXGISwapChain* swapChain);
-		void					Overlay(IDXGISwapChain* pSwapChain);
-
+		bool								GetD3DContext();
+		bool								HookD3D();
+		void								UnhookD3D();
+		bool								InitWindow();
+		bool								DeleteWindow();
+		bool								InitImGui(IDXGISwapChain* swapChain);
+		void								Overlay(IDXGISwapChain* pSwapChain);
 
 		//	constructor
 		explicit D3D11Window();
@@ -129,21 +129,19 @@ namespace FF7Remake
 	class Hooking
 	{
 	public:
-		void Initialize();
-		void Shutdown();
-		static bool CreateHook(LPVOID pTarget, LPVOID pDetour, LPVOID* pOrig);
-		static void EnableHook(LPVOID pTarget);
-		static void EnableAllHooks();
-		static void DisableHook(LPVOID pTarget);
-		static void RemoveHook(LPVOID pTarget);
-		static void DisableAllHooks();
-		static void RemoveAllHooks();
-
+		void								Initialize();
+		void								Shutdown();
+		static bool							CreateHook(LPVOID pTarget, LPVOID pDetour, LPVOID* pOrig);
+		static void							EnableHook(LPVOID pTarget);
+		static void							EnableAllHooks();
+		static void							DisableHook(LPVOID pTarget);
+		static void							RemoveHook(LPVOID pTarget);
+		static void							DisableAllHooks();
+		static void							RemoveAllHooks();
 
 		//	constructor
 		explicit Hooking();
 		~Hooking() noexcept;
 	};
 	inline std::unique_ptr<Hooking> g_Hooking;
-
 }

@@ -45,7 +45,7 @@ DWORD WINAPI MainThread(LPVOID hInstance)
     {
         if (Console::m_bGUI)
         {
-            if (Engine::GamePadGetKeyState(XINPUT_GAMEPAD_RIGHT_THUMB | XINPUT_GAMEPAD_LEFT_THUMB) || Engine::GetKeyState(VK_INSERT, 0) && ((GetTickCount64() - LastTick) > 500))
+            if ((Engine::GamePadGetKeyState(XINPUT_GAMEPAD_RIGHT_THUMB | XINPUT_GAMEPAD_LEFT_THUMB) || Engine::GetKeyState(VK_INSERT, 0)) && ((GetTickCount64() - LastTick) > 500))
             //if ((GetAsyncKeyState(VK_INSERT) & 0x8000) && ((GetTickCount64() - LastTick) > 500))
             {
                 //  Hide our info message
@@ -149,11 +149,11 @@ DWORD WINAPI MainThread(LPVOID hInstance)
                 //  AGame::bNullTargetDmg = false;
                 //  AGame::bTargetAlwaysStagger = false;
                 //  AGame::bKillTarget ^= 1;
-                AGame::bXpFarn ^= 1;
+                AGame::bXpFarm ^= 1;
                 LastTick = GetTickCount64();
 
                 //  Console::Log("[+] [Patch::KillTarget]\n");
-                Console::Log("[+] [Patch::XpFarm] %d\n", AGame::bXpFarn);
+                Console::Log("[+] [Patch::XpFarm] %d\n", AGame::bXpFarm);
             }
         }
 

@@ -28,13 +28,14 @@ namespace FF7Remake
 		static bool							bNullMgk;
 		static bool							bNullItem;
 		static bool							bModTimeScale;
-		static float						fTimeScale;
-		static bool							bMaxTargetLevel;
+		static float						fTimeScalar;
+		static bool							bModTargetLevel;
+		static int							iLevelScalar;
 		static bool							bKillTarget;
 		static bool							bNoTargetAttack;		//	target doesnt attack
 		static bool							bNullTargetDmg;			//	target takes no damage
 		static bool							bTargetAlwaysStagger;	//	target defense is set to 0
-		static bool							bXpFarn;				//	sets targets hp to 0, prevents targets from attacking , sets target stagger to max and sets target to max level for max reward
+		static bool							bXpFarm;				//	sets targets hp to 0, prevents targets from attacking , sets target stagger to max and sets target to max level for max reward
 	
 	public:
 		static void							InitGame();
@@ -47,6 +48,10 @@ namespace FF7Remake
 			static void						RefillCloudMP();
 			static void						CloudMaxLimit();
 			static void						CloudMaxATB();
+			static void						RefillPartyHP();
+			static void						RefillPartyMP();
+			static void						PartyMaxLimit();
+			static void						PartyMaxATB();
 		};
 
 	public:
