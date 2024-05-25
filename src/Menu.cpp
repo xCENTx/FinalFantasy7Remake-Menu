@@ -1,11 +1,11 @@
-#include "Menu.hpp"
+#include "Menu.h"
+#include "Engine.h"
+#include "Game.h"
 
-
-static const char* stats_party[]{ "CLOUD", "PARTY SLOT 2", "PARTY SLOT 3", "PARTY SLOT 4", "PARTY SLOT 5"};
-
-namespace FF7Remake {
-
-	namespace Styles {
+namespace FF7Remake 
+{
+	namespace Styles 
+    {
         void InitStyle()
         {
             ImGuiStyle& style = ImGui::GetStyle();
@@ -119,7 +119,7 @@ namespace FF7Remake {
             ImGui::SameLine();
             ImGui::Text("MP (%d/%d)", stats.MP, stats.MaxMP);
 
-            if (ImGui::InputFloat("##atb1", &stats.ATB))
+            if (ImGui::InputFloat("##atb1", &stats.ATB, 1.0f, 100.f, "%.2f"))
                 bUpdateStats = true;
             ImGui::SameLine();
             if (ImGui::Button("MAX##ATB"))
@@ -130,7 +130,7 @@ namespace FF7Remake {
             ImGui::SameLine();
             ImGui::Text("ATB");
 
-            if (ImGui::InputFloat("##limitbreak1", &stats.LimitBreak))
+            if (ImGui::InputFloat("##limitbreak1", &stats.LimitBreak, 1.0f, 100.f, "%.2f"))
                 bUpdateStats = true;
             ImGui::SameLine();
             if (ImGui::Button("MAX##Limit"))
@@ -213,57 +213,71 @@ namespace FF7Remake {
     {
         void Stats()
         {
-            AGameState* pGameState = CGlobal::gGameBase->GetGameState();
+            AGameState* pGameState = AGame::gGameBase->GetGameState();
             if (!pGameState)
                 return;
 
             static int selected_index{ 0 };
+            static const char* stats_party[]{ "CLOUD", "PARTY SLOT 2", "PARTY SLOT 3", "PARTY SLOT 4", "PARTY SLOT 5" };
             ImGui::Combo("PARTY MEMBER", &selected_index, stats_party, IM_ARRAYSIZE(stats_party));
             ImGui::Separator();
 
-            static int index;
-            if (selected_index == 0)
-                index = -1;
-            else
-                index = selected_index - 1;
-
+            int index = (selected_index - 1);
             Widgets::StatsEditor(pGameState, index);
         }
     }
 
 	namespace Tabs 
     {
-        void TABMain()
+        void TABplayer()
         {
-            ImGui::TextCentered("CHEATS");
-            ImGui::Toggle("NULLIFY DAMAGE", &g_GameData->bNullDmg);
-            ImGui::Toggle("DEMI GOD", &g_GameData->bDemiGod);
-            ImGui::Toggle("DEMI GOD MAGIC", &g_GameData->bDemiGodMagic);
-            ImGui::Toggle("ALWAYS LIMIT", &g_GameData->bMaxLimit);
-            ImGui::Toggle("ALWAYS ATB", &g_GameData->bMaxATB);
+            ImGui::Toggle("DEMI GOD", &AGame::bDemiGod);
+            ImGui::Toggle("DEMI MANA", &AGame::bDemiGodMagic);
+            ImGui::Toggle("MAX LIMIT", &AGame::bMaxLimit);
+            ImGui::Toggle("MAX ATB", &AGame::bMaxATB);
+            ImGui::Toggle("NO HP LOSS", &AGame::bNullDmg);
+            ImGui::Toggle("NO MANA LOSS", &AGame::bNullMgk);
+            ImGui::Toggle("NO ITEM LOSS", &AGame::bNullItem);
+            ImGui::Toggle("XP MOD", &AGame::bXpFarm);
 
-            ImGui::Toggle("PAUSE GAME w/ MENU", &g_GameData->bPauseGame);
-            if (ImGui::Toggle("MODIFY TIME SCALE", &g_GameData->bModTimeScale) && !g_GameData->bModTimeScale)
-                g_GameData->fTimeScale = 1.0f;
-            if (g_GameData->bModTimeScale)
-                ImGui::SliderFloat("TIME SCALE", &g_GameData->fTimeScale, 0.0f, 1.0f, "%.2f");
+            if (ImGui::Toggle("MODIFY TIME SCALE", &AGame::bModTimeScale) && !AGame::bModTimeScale)
+                AGame::fTimeScalar = 1.0f;
+            if (AGame::bModTimeScale)
+                ImGui::SliderFloat("##TIME SCALE", &AGame::fTimeScalar, 0.0f, 1.0f, "%.2f");
+        }
+
+        void TABitems()
+        {
 
         }
 
-        void TABStats()
+        void TABstats()
         {
             Stats::Stats();
         }
 
-        void TABAbout()
+        void TABenemies()
+        {
+
+            ImGui::Toggle("STUPIFY", &AGame::bNoTargetAttack);
+            ImGui::Toggle("NO DAMAGE", &AGame::bNullTargetDmg);
+            ImGui::Toggle("AUTO STAGGER", &AGame::bTargetAlwaysStagger);
+            ImGui::Toggle("1 HIT KILLS", &AGame::bKillTarget);
+            ImGui::Toggle("MODIFY LEVEL", &AGame::bModTargetLevel);
+            if (AGame::bModTargetLevel)
+                ImGui::InputInt("LEVEL", &AGame::iLevelScalar);
+
+        }
+        
+        void TABoptions()
         {
             ImGui::Text("BASE MENU (PREVIEW)");
             ImGui::Text("BUILD VERSION: v1.2");
             ImGui::Text("BUILD DATE: 5/22/2024");
-            if (ImGui::Checkbox("SHOW IMGUI DEMO", &g_GameData->m_ShowDemo)) g_Console->LogEvent("Menu::ShowImGuiDemo ; ", g_GameData->m_ShowDemo);
+            ImGui::Checkbox("PAUSE GAME", &AGame::bPauseGame);
+            ImGui::Checkbox("SHOW IMGUI DEMO", &g_Engine->m_ShowDemo);
 #if _DEBUG
-            if (ImGui::Checkbox("SHOW CONSOLE", &g_Console->m_ShowConsole)) g_Console->LogEvent("Console::ShowWindow ; ", g_Console->m_ShowConsole);
-            if (ImGui::Checkbox("VERBOSE LOGGING", &g_Console->verbose)) g_Console->LogEvent("Console::VerboseLogging ; ", g_Console->verbose);
+            //  ImGui::Checkbox("SHOW CONSOLE", &g_Console->m_ShowConsole);
 #endif
             ImGui::Spacing();
             ImGui::Separator();
@@ -271,50 +285,34 @@ namespace FF7Remake {
 
             if (ImGui::Button("UNHOOK DLL", ImVec2(ImGui::GetWindowContentRegionWidth() - 3, 20))) 
             {
-#if _DEBUG
-                g_Console->printdbg("\n\n[+] UNHOOK INITIALIZED [+]\n\n", g_Console->color.red);
-#endif
-
-                g_GameData->m_ShowMenu = false;
+                g_Engine->m_ShowMenu = false;
                 og_Killswitch = true;
             }
         }
 	}
 
+    //----------------------------------------------------------------------------------------------------
+    //										MENU
+    //-----------------------------------------------------------------------------------
+
 	void Menu::Draw()
 	{
-        if (!g_GameData->m_ShowDemo)
+        if (!g_Engine->m_ShowDemo)
             Styles::InitStyle();
 
-        if (g_GameData->m_ShowMenu)
-            MainMenu();
+        if (g_Engine->m_ShowMenu)
+            Menu::MainMenu();
 
-		if (g_GameData->m_ShowHud)
-			HUD();
+		if (g_Engine->m_ShowHud)
+            Menu::HUD();
 
-		if (g_GameData->m_ShowDemo)
+		if (g_Engine->m_ShowDemo)
 			ImGui::ShowDemoWindow();
-
-        switch (g_Console->m_ShowConsole) {
-        case(true):
-            if (!g_Console->ACTIVE) {
-                ShowWindow(g_Console->g_hWnd, SW_SHOW);
-                g_Console->ACTIVE = true;
-            }
-            break;
-        case(false):
-            if (g_Console->ACTIVE) {
-                ShowWindow(g_Console->g_hWnd, SW_HIDE);
-                g_Console->ACTIVE = false;
-            }
-            break;
-        }
 	}
 
-	void Menu::MainMenu()
-	{
-
-        if (!ImGui::Begin("Final Fantasy 7", &g_GameData->m_ShowMenu, 96 | ImGuiWindowFlags_NoTitleBar))
+    void Menu::MainMenu()
+    {
+        if (!ImGui::Begin("Final Fantasy 7 Remake", &g_Engine->m_ShowMenu, 96 | ImGuiWindowFlags_NoTitleBar))
         {
             ImGui::End();
             return;
@@ -323,25 +321,39 @@ namespace FF7Remake {
 
         if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None))
         {
-            if (ImGui::BeginTabItem("MAIN"))
+            if (ImGui::BeginTabItem("PLAYER"))
             {
-                Tabs::TABMain();
+                Tabs::TABplayer();
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("ITEMS"))
+            {
+                Tabs::TABitems();
                 ImGui::EndTabItem();
             }
 
             if (ImGui::BeginTabItem("STATS"))
             {
-                Tabs::TABStats();
+                Tabs::TABstats();
                 ImGui::EndTabItem();
             }
 
-            if (ImGui::BeginTabItem("DEBUG"))
+            if (ImGui::BeginTabItem("ENEMIES"))
             {
-                Tabs::TABAbout();
+                Tabs::TABenemies();
                 ImGui::EndTabItem();
             }
+
+            if (ImGui::BeginTabItem("OPTIONS"))
+            {
+                Tabs::TABoptions();
+                ImGui::EndTabItem();
+            }
+
             ImGui::EndTabBar();
         }
+
         ImGui::End();
 	}
 
@@ -358,21 +370,105 @@ namespace FF7Remake {
         ImGui::Text("PRESS [INSERT] OR [L3 + R3] TO SHOW THE MENU");
         ImGui::Separator();
         ImGui::TextColored(ImColor(255, 0, 0, 255), "MENU v1.2 | Released: May 23, 2024");
+
         ImGui::End();
 	}
 
 	void Menu::Loops()
 	{
-        if (g_GameData->bDemiGod)
-            Patches::RefillCloudHP();
+        if (AGame::bDemiGod)
+            AGame::Patches::RefillCloudHP();
 
-        if (g_GameData->bDemiGodMagic)
-            Patches::RefillCloudMP();
+        if (AGame::bDemiGodMagic)
+            AGame::Patches::RefillCloudMP();
 
-        if (g_GameData->bMaxLimit)
-            Patches::CloudMaxLimit();
+        if (AGame::bMaxLimit)
+            AGame::Patches::CloudMaxLimit();
 
-        if (g_GameData->bMaxATB)
-            Patches::CloudMaxATB();
+        if (AGame::bMaxATB)
+            AGame::Patches::CloudMaxATB();
 	}
+
+    //----------------------------------------------------------------------------------------------------
+    //										GUI
+    //-----------------------------------------------------------------------------------
+
+    void GUI::TextCentered(const char* pText)
+    {
+        ImVec2 textSize = ImGui::CalcTextSize(pText);
+        ImVec2 windowSize = ImGui::GetWindowSize();
+        ImVec2 textPos = ImVec2((windowSize.x - textSize.x) * 0.5f, (windowSize.y - textSize.y) * 0.5f);
+        ImGui::SetCursorPos(textPos);
+        ImGui::Text("%s", pText);
+    }
+
+    //  @ATTN: max buffer is 256chars
+    void GUI::TextCenteredf(const char* pText, ...)
+    {
+        va_list args;
+        va_start(args, pText);
+        char buffer[256];
+        vsnprintf(buffer, sizeof(buffer), pText, args);
+        va_end(args);
+
+        TextCentered(buffer);
+    }
+
+    void GUI::DrawText_(ImVec2 pos, ImColor color, const char* pText, float fontSize)
+    {
+        ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), fontSize, pos, color, pText, pText + strlen(pText), 800, 0);
+    }
+
+    //  @ATTN: max buffer is 256chars
+    void GUI::DrawTextf(ImVec2 pos, ImColor color, const char* pText, float fontSize, ...)
+    {
+        va_list args;
+        va_start(args, fontSize);
+        char buffer[256];
+        vsnprintf(buffer, sizeof(buffer), pText, args);
+        va_end(args);
+
+        DrawText_(pos, color, buffer, fontSize);
+    }
+
+    void GUI::DrawTextCentered(ImVec2 pos, ImColor color, const char* pText, float fontSize)
+    {
+        float textSize = ImGui::CalcTextSize(pText).x;
+        ImVec2 textPosition = ImVec2(pos.x - (textSize * 0.5f), pos.y);
+        DrawText_(textPosition, color, pText, fontSize);
+    }
+
+    //  @ATTN: max buffer is 256chars
+    void GUI::DrawTextCenteredf(ImVec2 pos, ImColor color, const char* pText, float fontSize, ...)
+    {
+        va_list args;
+        va_start(args, fontSize);
+        char buffer[256];
+        vsnprintf(buffer, sizeof(buffer), pText, args);
+        va_end(args);
+
+        DrawTextCentered(pos, color, pText, fontSize);
+    }
+
+    //  @ATTN: max buffer is 256chars
+    void GUI::DrawTextWindow(ImVec2 pos, const char* fmt, ...)
+    {
+
+        va_list args;
+        va_start(args, fmt);
+        char buffer[256];
+        vsnprintf(buffer, sizeof(buffer), fmt, args);
+        va_end(args);
+
+        ImGui::SetNextWindowPos(pos);
+        if (!ImGui::Begin(std::string("##").append(buffer).c_str(), 0, 103))
+        {
+            ImGui::End();
+            return;
+        }
+
+        ImGui::Text("%s", buffer);
+
+        ImGui::End();
+    }
 }

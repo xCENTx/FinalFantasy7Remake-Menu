@@ -129,6 +129,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)\include;$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -147,6 +148,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)\include;$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -157,11 +159,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Console.hpp" />
-    <ClInclude Include="D3D11Window.hpp" />
-    <ClInclude Include="Game.hpp" />
-    <ClInclude Include="helper.h" />
-    <ClInclude Include="Hooking.hpp" />
+    <ClInclude Include="include\Engine.h" />
+    <ClInclude Include="include\Game.h" />
+    <ClInclude Include="include\helper.h" />
+    <ClInclude Include="include\Menu.h" />
     <ClInclude Include="libs\ImGui\imconfig.h" />
     <ClInclude Include="libs\ImGui\imgui.h" />
     <ClInclude Include="libs\ImGui\imgui_impl_dx11.h" />
@@ -181,14 +182,9 @@
     <ClInclude Include="libs\MinHook\table32.h" />
     <ClInclude Include="libs\MinHook\table64.h" />
     <ClInclude Include="libs\MinHook\trampoline.h" />
-    <ClInclude Include="Menu.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Console.cpp" />
-    <ClCompile Include="D3D11Window.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="Game.cpp" />
-    <ClCompile Include="Hooking.cpp" />
     <ClCompile Include="libs\ImGui\imgui.cpp" />
     <ClCompile Include="libs\ImGui\imgui_demo.cpp" />
     <ClCompile Include="libs\ImGui\imgui_draw.cpp" />
@@ -202,7 +198,9 @@
     <ClCompile Include="libs\MinHook\hook.c" />
     <ClCompile Include="libs\MinHook\hookmain.cpp" />
     <ClCompile Include="libs\MinHook\trampoline.c" />
-    <ClCompile Include="Menu.cpp" />
+    <ClCompile Include="src\Engine.cpp" />
+    <ClCompile Include="src\Game.cpp" />
+    <ClCompile Include="src\Menu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />

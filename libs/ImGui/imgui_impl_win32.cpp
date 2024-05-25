@@ -30,7 +30,6 @@
 typedef DWORD (WINAPI *PFN_XInputGetCapabilities)(DWORD, DWORD, XINPUT_CAPABILITIES*);
 typedef DWORD (WINAPI *PFN_XInputGetState)(DWORD, XINPUT_STATE*);
 #endif
-#include "../../Game.hpp"
 
 // CHANGELOG
 // (minor and older changes stripped away, please see git history for details)
@@ -323,30 +322,6 @@ static void ImGui_ImplWin32_UpdateGamepads()
         MAP_ANALOG(ImGuiNavInput_LStickRight,   gamepad.sThumbLX,  +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
         MAP_ANALOG(ImGuiNavInput_LStickUp,      gamepad.sThumbLY,  +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
         MAP_ANALOG(ImGuiNavInput_LStickDown,    gamepad.sThumbLY,  -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32767);
-
-        //  Listen for L3 + R3
-        if (gamepad.wButtons == 0xC0) {
-            COUNT++;
-            if (COUNT >= 25) {
-                //  Hide our info message
-                if (FF7Remake::g_GameData->m_ShowHud == TRUE) 
-                    FF7Remake::g_GameData->m_ShowHud = FALSE;
-
-                //  Show / Hide Menu
-                FF7Remake::g_GameData->m_ShowMenu ^= 1;
-                COUNT = NULL;
-            }
-        }
-
-        ////  Button input listener
-        //if (gamepad.wButtons > 0) {
-        //    COUNT++;
-        //    if (COUNT >= 10) {
-        //        printf("KEY PRESSED: { %x }\n", gamepad.wButtons);
-        //        COUNT = NULL;
-        //    }
-        //}
-
         #undef MAP_BUTTON
         #undef MAP_ANALOG
     }

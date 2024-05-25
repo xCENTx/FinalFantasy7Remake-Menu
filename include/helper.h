@@ -4,8 +4,13 @@
 #include <Psapi.h>
 #include <TlHelp32.h>
 
+// DIRECTX
 #include <d3d11.h>
 #pragma comment(lib, "d3d11.lib")
+
+//	GAMEPAD
+#include <XInput.h>
+#pragma comment(lib, "XInput.lib")
 
 #include <iostream>
 #include <conio.h>
