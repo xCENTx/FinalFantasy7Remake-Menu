@@ -8,7 +8,7 @@ namespace FF7Remake
 	FILE*				Console::m_pOutStream{ nullptr };
 	bool				Console::m_bInit{ false };
 	bool				Console::m_bGUI{ false };
-	static				uint64_t* MethodsTable;
+	static				uint64_t* MethodsTable{ nullptr };
 
 	Engine::Engine()
 	{
@@ -19,8 +19,6 @@ namespace FF7Remake
 
 	Engine::~Engine()
 	{
-		g_Hooking->Shutdown();
-
 		g_Hooking.release();
 		g_D3D11Window.release();
 		g_Console.release();
@@ -99,9 +97,10 @@ namespace FF7Remake
 		m_pHwnd = GetConsoleWindow();
 		freopen_s(&m_pOutStream, "CONOUT$", "w", stdout);
 		SetConsoleTitleA(title);
-		ShowWindow(m_pHwnd, SW_SHOW);
 		Console::m_bInit = true;
 		Console::m_bGUI = GUI;
+		Console::m_bShow = !GUI;
+		ShowWindow(m_pHwnd, Console::m_bShow ? SW_SHOW : SW_HIDE);
 	}
 
 	void Console::cLog(const char* fmt, EColors Color, ...)
@@ -161,43 +160,82 @@ namespace FF7Remake
 	//
 #pragma region	//	D3DWINDOW
 
-	D3D11Window::~D3D11Window() 
-	{ 
-		free(MethodsTable); 
-		m_Init = false;
-	}
+	D3D11Window::D3D11Window() {}
+
+	D3D11Window::~D3D11Window()  { m_Init = false; }
 
 	LRESULT D3D11Window::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		if (g_Engine->m_ShowMenu)
 		{
 			ImGui_ImplWin32_WndProcHandler((HWND)g_D3D11Window->m_OldWndProc, msg, wParam, lParam);
-			return false;
+			return true;
 		}
 		return CallWindowProc((WNDPROC)g_D3D11Window->m_OldWndProc, hWnd, msg, wParam, lParam);
 	}
 
-	bool D3D11Window::GetWindowContext()
+	HRESULT APIENTRY D3D11Window::Swapchain_present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags)
 	{
-		if (HijackWindow())
+		g_D3D11Window->Overlay(pSwapChain);
+
+		return g_D3D11Window->Swapchain_present_stub(pSwapChain, SyncInterval, Flags);
+	}
+
+	HRESULT APIENTRY D3D11Window::Swapchain_ResizeBuffers_hook(IDXGISwapChain* p, UINT bufferCount, UINT Width, UINT Height, DXGI_FORMAT fmt, UINT scFlags)
+	{
+		//  Get new data & release render target
+		g_D3D11Window->m_pSwapChain = p;
+		g_D3D11Window->m_RenderTargetView->Release();
+		g_D3D11Window->m_RenderTargetView = nullptr;
+
+		//  get fn result
+		HRESULT result = g_D3D11Window->Swapchain_ResizeBuffers_stub(p, bufferCount, Width, Height, fmt, scFlags);
+
+		// Get new render target
+		ID3D11Texture2D* backBuffer;
+		p->GetBuffer(0, __uuidof(ID3D11Texture2D*), (LPVOID*)&backBuffer);
+		if (backBuffer)
 		{
-			//	Update Pointers
-			g_Hooking->pSwapchain_Present = MethodsTable[8];
-			g_Hooking->pSwapchain_DrawIndexed = MethodsTable[12];
+			g_D3D11Window->m_Device->CreateRenderTargetView(backBuffer, 0, &g_D3D11Window->m_RenderTargetView);
+			backBuffer->Release();
+		}
+
+		//  Reset ImGui 
+		if (g_D3D11Window->b_ImGui_Initialized)
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			io.DisplaySize = ImVec2(static_cast<float>(Width), static_cast<float>(Height));
+		}
+
+		return result;
+	}
+
+	bool D3D11Window::HookD3D()
+	{
+		if (GetD3DContext())
+		{
+			Hooking::CreateHook((void*)MethodsTable[8], &Swapchain_present_hook, (void**)&Swapchain_present_stub);
+			Hooking::CreateHook((void*)MethodsTable[13], &Swapchain_ResizeBuffers_hook, (void**)&Swapchain_ResizeBuffers_stub);
 			m_Init = true;
 			return true;
 		}
 		return false;
 	}
 
-	bool D3D11Window::HijackWindow()
+	void D3D11Window::UnhookD3D()
+	{
+		SetWindowLongPtr(g_Engine->g_GameWindow, GWLP_WNDPROC, (LONG_PTR)m_OldWndProc);
+		Hooking::DisableHook((void*)MethodsTable[8]);
+		Hooking::DisableHook((void*)MethodsTable[13]);
+		free(MethodsTable);
+	}
+
+	bool D3D11Window::GetD3DContext()
 	{
 		if (!InitWindow())
-			return false;
+			return true;
 
 		HMODULE D3D11Module = GetModuleHandleA("d3d11.dll");
-		if (!D3D11Module)
-			return false;
 
 		D3D_FEATURE_LEVEL FeatureLevel;
 		const D3D_FEATURE_LEVEL FeatureLevels[] = { D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_11_0 };
@@ -234,15 +272,19 @@ namespace FF7Remake
 		if (D3D11CreateDeviceAndSwapChain(0, D3D_DRIVER_TYPE_HARDWARE, 0, 0, FeatureLevels, 1, D3D11_SDK_VERSION, &SwapChainDesc, &SwapChain, &Device, &FeatureLevel, &Context) < 0)
 		{
 			DeleteWindow();
-			return false;
+			return true;
 		}
 
-		//	copy virtual method pointers into a table
 		MethodsTable = (uint64_t*)::calloc(205, sizeof(uint64_t));
 		memcpy(MethodsTable, *(uint64_t**)SwapChain, 18 * sizeof(uint64_t));
 		memcpy(MethodsTable + 18, *(uint64_t**)Device, 43 * sizeof(uint64_t));
 		memcpy(MethodsTable + 18 + 43, *(uint64_t**)Context, 144 * sizeof(uint64_t));
+		Sleep(1000);
 
+		//	INIT NOTICE
+		Beep(300, 300);
+
+		MH_Initialize();
 		SwapChain->Release();
 		SwapChain = 0;
 		Device->Release();
@@ -278,7 +320,7 @@ namespace FF7Remake
 	{
 		DestroyWindow(WindowHwnd);
 		UnregisterClass(WindowClass.lpszClassName, WindowClass.hInstance);
-		if (WindowHwnd)
+		if (WindowHwnd != 0)
 			return false;
 		return true;
 	}
@@ -288,12 +330,11 @@ namespace FF7Remake
 		if (SUCCEEDED(swapChain->GetDevice(__uuidof(ID3D11Device), (void**)&m_Device))) {
 			ImGui::CreateContext();
 			ImGuiIO& io = ImGui::GetIO(); (void)io;
-			ImGui::GetIO().WantCaptureMouse;
-			ImGui::GetIO().WantTextInput;
-			ImGui::GetIO().WantCaptureKeyboard;
-			io.ConfigFlags = ImGuiConfigFlags_NavEnableGamepad;
+			ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantTextInput || ImGui::GetIO().WantCaptureKeyboard;
 			io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-			io.IniFilename = NULL;
+			io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+			io.IniFilename = 0;
+			ImGui::StyleColorsDark();
 			m_Device->GetImmediateContext(&m_DeviceContext);
 
 			DXGI_SWAP_CHAIN_DESC Desc;
@@ -311,6 +352,9 @@ namespace FF7Remake
 			ImGui::GetIO().ImeWindowHandle = g_Engine->g_GameWindow;
 			m_OldWndProc = (WNDPROC)SetWindowLongPtr(g_Engine->g_GameWindow, GWLP_WNDPROC, (__int3264)(LONG_PTR)WndProc);
 			b_ImGui_Initialized = true;
+			m_pSwapChain = swapChain;
+			pImGui = GImGui;
+			pViewport = pImGui->Viewports[0];
 			return true;
 		}
 		b_ImGui_Initialized = false;
@@ -357,30 +401,20 @@ namespace FF7Remake
 
 	void Hooking::Initialize()
 	{
-		if (Console::m_bGUI && g_D3D11Window->GetWindowContext())
-		{
-			if (pSwapchain_Present)
-				CreateHook((LPVOID)pSwapchain_Present, &Swapchain_present_hook, (void**)&Swapchain_present_stub);
-
-			if (pSwapchain_DrawIndexed)
-				CreateHook((LPVOID)pSwapchain_DrawIndexed, &Swapchain_DrawIndexed_hook, (void**)&Swapchain_DrawIndexed_stub);
-
+		//	@TODO: should be included as an init method for d3dwindow class
+		if (Console::m_bGUI && g_D3D11Window->HookD3D())
 			g_Engine->m_ShowHud = true;
-		}
 
 		EnableAllHooks();
 	}
 
 	void Hooking::Shutdown()
 	{
-		if (pSwapchain_Present)
-			DisableHook((LPVOID)pSwapchain_Present);
-
-		if (pSwapchain_DrawIndexed)
-			DisableHook((LPVOID)pSwapchain_DrawIndexed);
+		//	@TODO: should be included as a shutdown method for d3dwindow class
+		if (Console::m_bGUI && g_D3D11Window->m_Init)
+			g_D3D11Window->UnhookD3D();
 
 		RemoveAllHooks(); 
-		RemoveAllHooks();
 	}
 
 	bool Hooking::CreateHook(LPVOID lpTarget, LPVOID pDetour, LPVOID* pOrig)
@@ -401,19 +435,6 @@ namespace FF7Remake
 	void Hooking::DisableAllHooks() { MH_DisableHook(MH_ALL_HOOKS); }
 
 	void Hooking::RemoveAllHooks() { MH_RemoveHook(MH_ALL_HOOKS); }
-
-	HRESULT APIENTRY Hooking::Swapchain_present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags)
-	{
-		//	Render Scene
-		g_D3D11Window->Overlay(pSwapChain);
-
-		return g_Hooking->Swapchain_present_stub(pSwapChain, SyncInterval, Flags);
-	}
-
-	void APIENTRY Hooking::Swapchain_DrawIndexed_hook(ID3D11DeviceContext* pContext, UINT IndexCount, UINT StartIndexLocation, INT BaseVertexLocation)
-	{
-		g_Hooking->Swapchain_DrawIndexed_stub(pContext, IndexCount, StartIndexLocation, BaseVertexLocation);
-	}
 
 #pragma endregion
 

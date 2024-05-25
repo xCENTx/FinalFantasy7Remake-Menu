@@ -57,12 +57,10 @@ namespace FF7Remake
 			static XInput_State XInput_State_stub;
 			static __int64 pXInput_State;
 
-
 			typedef void(__fastcall* AScene_Update)(__int64);
 			static void __fastcall AScene_Update_hook(__int64 p);
 			static AScene_Update AScene_Update_stub;
 			static __int64 pAScene_Update;
-
 
 			typedef __int64(__fastcall* APlayerState_SetHealth)(unsigned __int8, int);
 			static __int64 __fastcall APlayerState_SetHealth_hook(unsigned __int8 a1, int a2);
@@ -73,7 +71,6 @@ namespace FF7Remake
 			static __int64 __fastcall APlayerState_SetMana_hook(unsigned __int8 a1, int a2);
 			static APlayerState_SetMP APlayerState_SetMana_stub;
 			static __int64 pAPlayerState_SetMana;
-
 
 			typedef __int64(__fastcall* APlayerState_SubItem)(__int64, int);
 			static __int64 __fastcall APlayerState_SubItem_hook(__int64 a1, int a2);

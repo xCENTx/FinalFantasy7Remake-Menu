@@ -14,7 +14,9 @@ void BackgroundWorker()
         if (og_Killswitch)
         {
             AGame::ShutdownGame();
-            g_Engine.release();
+            g_Hooking->Shutdown();
+
+            g_Engine.release();     //  releases all created class instances
             og_Running = false;
         }
 
@@ -30,12 +32,10 @@ DWORD WINAPI MainThread(LPVOID hInstance)
 
     using namespace FF7Remake;
     g_Engine = std::make_unique<Engine>();
-    AGame::InitGame();
-    
-
-    g_Console->InitializeConsole("Final Fantasy 7 Remake : Debug Console", false);      //  initialize console without menu gui
+    g_Console->InitializeConsole("Final Fantasy 7 Remake : Debug Console", true);      //  initialize console without menu gui
     g_Engine->Init();                                                                   //  Get Process Information
     g_Hooking->Initialize();                                                            //  Hook Functions
+    AGame::InitGame();
 
     std::thread UPDATE(BackgroundWorker);
 

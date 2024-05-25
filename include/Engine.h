@@ -65,7 +65,7 @@ namespace FF7Remake
 		static bool		m_bGUI;
 		HANDLE			m_pHandle{ 0 };
 		HWND			m_pHwnd{ 0 };
-		bool			m_bShow{ true };
+		bool			m_bShow{ false };
 		bool			m_bVerbose{ false };
 
 	public:
@@ -92,18 +92,28 @@ namespace FF7Remake
 		ID3D11Device*			m_Device{};
 		ID3D11DeviceContext*	m_DeviceContext{};
 		ID3D11RenderTargetView* m_RenderTargetView{};
+		IDXGISwapChain*			m_pSwapChain{};
 	
 	private:
+		typedef HRESULT(APIENTRY* IDXGISwapChainPresent)(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);
+		typedef HRESULT(APIENTRY* IDXGISwapChain_ResizeBuffers)(IDXGISwapChain* p, UINT bufferCount, UINT Width, UINT Height, DXGI_FORMAT fmt, UINT scFlags);
+		static HRESULT APIENTRY Swapchain_present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);
+		static HRESULT APIENTRY Swapchain_ResizeBuffers_hook(IDXGISwapChain* p, UINT bufferCount, UINT Width, UINT Height, DXGI_FORMAT fmt, UINT scFlags);
 		static LRESULT APIENTRY WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		IDXGISwapChainPresent Swapchain_present_stub = 0;
+		IDXGISwapChain_ResizeBuffers Swapchain_ResizeBuffers_stub = 0;
 
 	public:
 		bool					m_Init{};
 		bool					b_ImGui_Initialized{};
 		WNDPROC					m_OldWndProc{};
+		ImGuiContext*			pImGui;
+		ImGuiViewport*			pViewport;
 
 	public:
-		bool					HijackWindow();
-		bool					GetWindowContext();
+		bool					GetD3DContext();
+		bool					HookD3D();
+		void					UnhookD3D();
 		bool					InitWindow();
 		bool					DeleteWindow();
 		bool					InitImGui(IDXGISwapChain* swapChain);
@@ -111,7 +121,7 @@ namespace FF7Remake
 
 
 		//	constructor
-		explicit D3D11Window() = default;
+		explicit D3D11Window();
 		~D3D11Window() noexcept;
 	};
 	inline std::unique_ptr<D3D11Window> g_D3D11Window;
@@ -128,19 +138,6 @@ namespace FF7Remake
 		static void RemoveHook(LPVOID pTarget);
 		static void DisableAllHooks();
 		static void RemoveAllHooks();
-
-
-		//	Hook is applied in D3D11Window
-		typedef HRESULT(APIENTRY* IDXGISwapChainPresent)(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);
-		static HRESULT APIENTRY Swapchain_present_hook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);
-		IDXGISwapChainPresent Swapchain_present_stub = 0;
-		__int64 pSwapchain_Present = 0;
-
-		//	Hook is applied in D3D11Window
-		typedef void(APIENTRY* ID3D11DrawIndexed)(ID3D11DeviceContext* pContext, UINT IndexCount, UINT StartIndexLocation, INT BaseVertexLocation);
-		static void APIENTRY Swapchain_DrawIndexed_hook(ID3D11DeviceContext* pContext, UINT IndexCount, UINT StartIndexLocation, INT BaseVertexLocation);
-		ID3D11DrawIndexed Swapchain_DrawIndexed_stub = 0;
-		__int64 pSwapchain_DrawIndexed = 0;
 
 
 		//	constructor
