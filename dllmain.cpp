@@ -1,27 +1,20 @@
 #pragma once
 #include "helper.h"
-#include "Console.hpp"
-#include "Game.hpp"
-#include "D3D11Window.hpp"
-#include "Hooking.hpp"
-#include "Menu.hpp"
+#include "Engine.h"
+#include "Game.h"
+#include "Menu.h"
 
 void BackgroundWorker()
 {
     using namespace FF7Remake;
     while (og_Running)
     {
-        g_Menu->Loops();
+        Menu::Loops();
 
         if (og_Killswitch)
         {
-            g_Hooking->Shutdown();
-
-            g_Hooking.release();
-            g_Menu.release();
-            g_D3D11Window.release();
-            g_GameData.release();
-
+            AGame::ShutdownGame();
+            g_Engine.release();
             og_Running = false;
         }
 
@@ -31,18 +24,17 @@ void BackgroundWorker()
     return;
 }
 
-DWORD WINAPI MainThread()
+DWORD WINAPI MainThread(LPVOID hInstance)
 {
+    UNREFERENCED_PARAMETER(hInstance);
+
     using namespace FF7Remake;
-    g_Console = std::make_unique<Console>();
-    g_GameData = std::make_unique<GameData>();
-    g_D3D11Window = std::make_unique<D3D11Window>();
-    g_Hooking = std::make_unique<Hooking>();
-    g_Menu = std::make_unique<Menu>();
+    g_Engine = std::make_unique<Engine>();
+    AGame::InitGame();
     
 
     g_Console->InitializeConsole("Final Fantasy 7 Remake : Debug Console", false);      //  initialize console without menu gui
-    g_GameData->Init();                                                                 //  Get Process Information
+    g_Engine->Init();                                                                   //  Get Process Information
     g_Hooking->Initialize();                                                            //  Hook Functions
 
     std::thread UPDATE(BackgroundWorker);
@@ -53,14 +45,15 @@ DWORD WINAPI MainThread()
     {
         if (Console::m_bGUI)
         {
-            if ((GetAsyncKeyState(VK_INSERT) & 0x8000) && ((GetTickCount64() - LastTick) > 500))
+            if (Engine::GamePadGetKeyState(XINPUT_GAMEPAD_RIGHT_THUMB | XINPUT_GAMEPAD_LEFT_THUMB) || Engine::GetKeyState(VK_INSERT, 0) && ((GetTickCount64() - LastTick) > 500))
+            //if ((GetAsyncKeyState(VK_INSERT) & 0x8000) && ((GetTickCount64() - LastTick) > 500))
             {
                 //  Hide our info message
-                if (g_GameData->m_ShowHud == TRUE)
-                    g_GameData->m_ShowHud = FALSE;
+                if (g_Engine->m_ShowHud == TRUE)
+                    g_Engine->m_ShowHud = FALSE;
 
                 //  Show / Hide Menu
-                g_GameData->m_ShowMenu ^= 1;
+                g_Engine->m_ShowMenu ^= 1;
 
                 LastTick = GetTickCount64();
             }
@@ -80,87 +73,87 @@ DWORD WINAPI MainThread()
             //  Set No Damage Mod
             if ((GetAsyncKeyState(VK_NUMPAD1) & 0x8000) && ((GetTickCount64() - LastTick) > 500))
             {
-                g_GameData->bNullDmg ^= 1;
+                AGame::bNullDmg ^= 1;
                 LastTick = GetTickCount64();
 
-                Console::Log("[+] [Patch::NullDmg] %d\n", g_GameData->bNullDmg);
+                Console::Log("[+] [Patch::NullDmg] %d\n", AGame::bNullDmg);
             }
 
             //  Set No Mana Use Mod
             if ((GetAsyncKeyState(VK_NUMPAD2) & 0x8000) && ((GetTickCount64() - LastTick) > 500))
             {
-                g_GameData->bNullMgk ^= 1;
+                AGame::bNullMgk ^= 1;
                 LastTick = GetTickCount64();
 
-                Console::Log("[+] [Patch::NullMana] %d\n", g_GameData->bNullMgk);
+                Console::Log("[+] [Patch::NullMana] %d\n", AGame::bNullMgk);
             }
 
             //  Set No Item Use Mod
             if ((GetAsyncKeyState(VK_NUMPAD3) & 0x8000) && ((GetTickCount64() - LastTick) > 500))
             {
-                g_GameData->bNullItem ^= 1;
+                AGame::bNullItem ^= 1;
                 LastTick = GetTickCount64();
 
-                Console::Log("[+] [Patch::NullItem] %d\n", g_GameData->bNullItem);
+                Console::Log("[+] [Patch::NullItem] %d\n", AGame::bNullItem);
             }
 
             //  Set Max ATB Mod
             if ((GetAsyncKeyState(VK_NUMPAD4) & 0x8000) && ((GetTickCount64() - LastTick) > 500))
             {
-                g_GameData->bMaxATB ^= 1;
+                AGame::bMaxATB ^= 1;
                 LastTick = GetTickCount64();
 
-                Console::Log("[+] [Patch::MaxATB] %d\n", g_GameData->bMaxATB);
+                Console::Log("[+] [Patch::MaxATB] %d\n", AGame::bMaxATB);
             }
             
             //  Set Max Limit Mod
             if ((GetAsyncKeyState(VK_NUMPAD5) & 0x8000) && ((GetTickCount64() - LastTick) > 500))
             {
-                g_GameData->bMaxLimit ^= 1;
+                AGame::bMaxLimit ^= 1;
                 LastTick = GetTickCount64();
 
-                Console::Log("[+] [Patch::MaxLimit] %d\n", g_GameData->bMaxLimit);
+                Console::Log("[+] [Patch::MaxLimit] %d\n", AGame::bMaxLimit);
             }
 
             //  Set Target Doesn't Attack
             if ((GetAsyncKeyState(VK_NUMPAD6) & 0x8000) && ((GetTickCount64() - LastTick) > 500))
             {
-                g_GameData->bNoTargetAttack ^= 1;
+                AGame::bNoTargetAttack ^= 1;
                 LastTick = GetTickCount64();
 
-                Console::Log("[+] [Patch::TargetNoAttack] %d\n", g_GameData->bNoTargetAttack);
+                Console::Log("[+] [Patch::TargetNoAttack] %d\n", AGame::bNoTargetAttack);
             }
 
             //  Set Target Takes No Damage
             if ((GetAsyncKeyState(VK_NUMPAD7) & 0x8000) && ((GetTickCount64() - LastTick) > 500))
             {
-                g_GameData->bNullTargetDmg ^= 1;
+                AGame::bNullTargetDmg ^= 1;
                 LastTick = GetTickCount64();
 
-                Console::Log("[+] [Patch::TargetTakesNoDamage] %d\n", g_GameData->bNullTargetDmg);
+                Console::Log("[+] [Patch::TargetTakesNoDamage] %d\n", AGame::bNullTargetDmg);
             }
 
             //  Set Target Always Stagger
             if ((GetAsyncKeyState(VK_NUMPAD8) & 0x8000) && ((GetTickCount64() - LastTick) > 500))
             {
-                g_GameData->bTargetAlwaysStagger ^= 1;
+                AGame::bTargetAlwaysStagger ^= 1;
                 LastTick = GetTickCount64();
 
-                Console::Log("[+] [Patch::TargetAlwaysStagger] %d\n", g_GameData->bTargetAlwaysStagger);
+                Console::Log("[+] [Patch::TargetAlwaysStagger] %d\n", AGame::bTargetAlwaysStagger);
             }
 
             //  Set Kill Target
             //  Set Xp Farm
             if ((GetAsyncKeyState(VK_NUMPAD9) & 0x8000) && ((GetTickCount64() - LastTick) > 500))
             {
-                //  g_GameData->bNullTargetDmg = false;
-                //  g_GameData->bTargetAlwaysStagger = false;
-                //  g_GameData->bKillTarget ^= 1;
-                g_GameData->bXpFarn ^= 1;
+                //  AGame::bNullTargetDmg = false;
+                //  AGame::bTargetAlwaysStagger = false;
+                //  AGame::bKillTarget ^= 1;
+                AGame::bXpFarn ^= 1;
                 LastTick = GetTickCount64();
 
                 //  Console::Log("[+] [Patch::KillTarget]\n");
-                Console::Log("[+] [Patch::XpFarm] %d\n", g_GameData->bXpFarn);
+                Console::Log("[+] [Patch::XpFarm] %d\n", AGame::bXpFarn);
             }
         }
 
@@ -179,19 +172,23 @@ DWORD WINAPI MainThread()
     FreeLibraryAndExitThread(og_hModule, EXIT_SUCCESS);
 }
 
-BOOL APIENTRY DllMain( HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved )
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
+    UNREFERENCED_PARAMETER(lpReserved);
+
     using namespace FF7Remake;
-    og_hModule = hModule;
-    switch (ul_reason_for_call)
+
+    if (ul_reason_for_call == DLL_PROCESS_ATTACH)
     {
-    case DLL_PROCESS_ATTACH:
+        og_hModule = hModule;
+
         DisableThreadLibraryCalls(og_hModule);
-        CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)MainThread, og_hModule, NULL, NULL);
-        break;
-    case DLL_PROCESS_DETACH:
-        og_Killswitch = TRUE;
-        break;
+    
+        HANDLE hThread = CreateThread(NULL, NULL, MainThread, og_hModule, NULL, NULL);
+        
+        if (hThread)
+            CloseHandle(hThread);
     }
-    return TRUE;
+    
+    return true;
 }

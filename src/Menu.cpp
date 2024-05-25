@@ -1,4 +1,6 @@
-#include "Menu.hpp"
+#include "Menu.h"
+#include "Engine.h"
+#include "Game.h"
 
 
 static const char* stats_party[]{ "CLOUD", "PARTY SLOT 2", "PARTY SLOT 3", "PARTY SLOT 4", "PARTY SLOT 5"};
@@ -6,7 +8,8 @@ static const char* stats_party[]{ "CLOUD", "PARTY SLOT 2", "PARTY SLOT 3", "PART
 namespace FF7Remake 
 {
 
-	namespace Styles {
+	namespace Styles 
+    {
         void InitStyle()
         {
             ImGuiStyle& style = ImGui::GetStyle();
@@ -214,7 +217,7 @@ namespace FF7Remake
     {
         void Stats()
         {
-            AGameState* pGameState = CGlobal::gGameBase->GetGameState();
+            AGameState* pGameState = AGame::gGameBase->GetGameState();
             if (!pGameState)
                 return;
 
@@ -237,17 +240,17 @@ namespace FF7Remake
         void TABMain()
         {
             ImGui::TextCentered("CHEATS");
-            ImGui::Toggle("NULLIFY DAMAGE", &g_GameData->bNullDmg);
-            ImGui::Toggle("DEMI GOD", &g_GameData->bDemiGod);
-            ImGui::Toggle("DEMI GOD MAGIC", &g_GameData->bDemiGodMagic);
-            ImGui::Toggle("ALWAYS LIMIT", &g_GameData->bMaxLimit);
-            ImGui::Toggle("ALWAYS ATB", &g_GameData->bMaxATB);
+            ImGui::Toggle("NULLIFY DAMAGE", &AGame::bNullDmg);
+            ImGui::Toggle("DEMI GOD", &AGame::bDemiGod);
+            ImGui::Toggle("DEMI GOD MAGIC", &AGame::bDemiGodMagic);
+            ImGui::Toggle("ALWAYS LIMIT", &AGame::bMaxLimit);
+            ImGui::Toggle("ALWAYS ATB", &AGame::bMaxATB);
 
-            ImGui::Toggle("PAUSE GAME w/ MENU", &g_GameData->bPauseGame);
-            if (ImGui::Toggle("MODIFY TIME SCALE", &g_GameData->bModTimeScale) && !g_GameData->bModTimeScale)
-                g_GameData->fTimeScale = 1.0f;
-            if (g_GameData->bModTimeScale)
-                ImGui::SliderFloat("TIME SCALE", &g_GameData->fTimeScale, 0.0f, 1.0f, "%.2f");
+            ImGui::Toggle("PAUSE GAME w/ MENU", &AGame::bPauseGame);
+            if (ImGui::Toggle("MODIFY TIME SCALE", &AGame::bModTimeScale) && !AGame::bModTimeScale)
+                AGame::fTimeScale = 1.0f;
+            if (AGame::bModTimeScale)
+                ImGui::SliderFloat("TIME SCALE", &AGame::fTimeScale, 0.0f, 1.0f, "%.2f");
 
         }
 
@@ -261,7 +264,7 @@ namespace FF7Remake
             ImGui::Text("BASE MENU (PREVIEW)");
             ImGui::Text("BUILD VERSION: v1.2");
             ImGui::Text("BUILD DATE: 5/22/2024");
-            ImGui::Checkbox("SHOW IMGUI DEMO", &g_GameData->m_ShowDemo);
+            ImGui::Checkbox("SHOW IMGUI DEMO", &g_Engine->m_ShowDemo);
 #if _DEBUG
             //  ImGui::Checkbox("SHOW CONSOLE", &g_Console->m_ShowConsole);
 #endif
@@ -271,7 +274,7 @@ namespace FF7Remake
 
             if (ImGui::Button("UNHOOK DLL", ImVec2(ImGui::GetWindowContentRegionWidth() - 3, 20))) 
             {
-                g_GameData->m_ShowMenu = false;
+                g_Engine->m_ShowMenu = false;
                 og_Killswitch = true;
             }
         }
@@ -279,22 +282,22 @@ namespace FF7Remake
 
 	void Menu::Draw()
 	{
-        if (!g_GameData->m_ShowDemo)
+        if (!g_Engine->m_ShowDemo)
             Styles::InitStyle();
 
-        if (g_GameData->m_ShowMenu)
-            MainMenu();
+        if (g_Engine->m_ShowMenu)
+            Menu::MainMenu();
 
-		if (g_GameData->m_ShowHud)
-			HUD();
+		if (g_Engine->m_ShowHud)
+            Menu::HUD();
 
-		if (g_GameData->m_ShowDemo)
+		if (g_Engine->m_ShowDemo)
 			ImGui::ShowDemoWindow();
 	}
 
 	void Menu::MainMenu()
 	{
-        if (!ImGui::Begin("Final Fantasy 7 Remake", &g_GameData->m_ShowMenu, 96 | ImGuiWindowFlags_NoTitleBar))
+        if (!ImGui::Begin("Final Fantasy 7 Remake", &g_Engine->m_ShowMenu, 96 | ImGuiWindowFlags_NoTitleBar))
         {
             ImGui::End();
             return;
@@ -346,16 +349,16 @@ namespace FF7Remake
 
 	void Menu::Loops()
 	{
-        if (g_GameData->bDemiGod)
-            Patches::RefillCloudHP();
+        if (AGame::bDemiGod)
+            AGame::Patches::RefillCloudHP();
 
-        if (g_GameData->bDemiGodMagic)
-            Patches::RefillCloudMP();
+        if (AGame::bDemiGodMagic)
+            AGame::Patches::RefillCloudMP();
 
-        if (g_GameData->bMaxLimit)
-            Patches::CloudMaxLimit();
+        if (AGame::bMaxLimit)
+            AGame::Patches::CloudMaxLimit();
 
-        if (g_GameData->bMaxATB)
-            Patches::CloudMaxATB();
+        if (AGame::bMaxATB)
+            AGame::Patches::CloudMaxATB();
 	}
 }
