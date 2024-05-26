@@ -669,7 +669,7 @@ namespace FF7Remake
 
 		auto v4 = p + 8 * index;									// OnSubItem*
 		auto v11 = *(__int64**)(v4 + 0x48);							// inventory
-		AItemSlot* v12 = reinterpret_cast<AItemSlot*>(*v11);		// ItemSlot
+		AItem* v12 = reinterpret_cast<AItem*>(*v11);				// ItemSlot
 		int sub_amount = *((__int32*)v11 + 3);						// sub amount
 		int v13 = v12->count - sub_amount;							// sub item new amount
 
@@ -767,19 +767,93 @@ namespace FF7Remake
 #pragma endregion
 
 	//----------------------------------------------------------------------------------------------------
-	//										AITEMSLOT
+	//										AITEM
 	//-----------------------------------------------------------------------------------
-#pragma region	//	AITEMSLOT
+#pragma region	//	AITEM
 
-	bool AItemSlot::IsValidIndex()
+	bool AItem::IsItem()
 	{
-		if (flag > 0)
-			return false;
+		bool result{ false };
+		
+		switch (flag)
+		{
+			case EItemType_Item: result = true; break;
+			case EItemType_KeyItem: result = true; break;
+		}
 
-		if (flag2 > 0)
-			return false;
+		return result;
+	}
 
-		return isAvailable;
+	__int32 AItem::GetID() { return this->ID; }
+
+	std::string AItem::GetName()
+	{
+		std::string result;
+		
+		switch (ID)
+		{
+		//	case EItem_POTION: result = "Potion"; break;
+		//	case EItem_ETHER: result = "Ether"; break;
+		//	case EItem_GIL: result = "Gil"; break;
+		//	case EItem_GRENADE: result = "Grenade"; break;
+		//	case EItem_MOOGLE_MEDAL: result = "Moogle Medal"; break;
+		//	case EItem_PHOENIX_DOWN: result = "Phoenix Down"; break;
+		//	case EItem_HI_POTION: result = "Hi-Potion"; break;
+		//	case EItem_YELLOW_FLOWER: result = "Yellow Flower"; break;
+		//	case EItem_ADRENALINE: result = "Adrenaline"; break;
+		//	case EItem_SEDATIVE: result = "Sedative"; break;
+		//	case EItem_COMBAT_ANALYZER: result = "Combat Analyzer"; break;
+		//	case EItem_MAIDENS_KISS: result = "Maiden's Kiss"; break;
+		//	case EItem_ANTIDOTE: result = "Antidote"; break;
+		//	case EItem_ELIXIR: result = "Elixir"; break;
+		//	case EItem_WATCH_SECURITY_KEY: result = "Watch Security Key"; break;
+		//	case EItem_SHINRA_ID_CARD: result = "Shinra ID Card"; break;
+		//	case EItem_ORB_OF_GRAVITY: result = "Orb of Gravity"; break;
+		//	case EItem_HAZARDOUS_MATERIAL: result = "Hazardous Material"; break;
+		//	case EItem_REMEDY: result = "Remedy"; break;
+		//	case EItem_GRAPPLING_GUN: result = "Grappling Gun"; break;
+		//	case EItem_ECHO_MIST: result = "Echo Mist"; break;
+		//	case EItem_SECTOR_5_REACTOR_KEY_CARD: result = "Sector 5 Reactor Key Card"; break;
+		//	case EItem_BIG_BOMBER: result = "Big Bomber"; break;
+		//	case EItem_MEGA_POTION: result = "Mega Potion"; break;
+		//	case EItem_SMELLING_SALTS: result = "Smelling Salts"; break;
+		//	case EItem_CELERIS: result = "Celeris"; break;
+		//	case EItem_HANDMADE_NECKLACE: result = "Handmade Necklace"; break;
+		//	case EItem_MOOGLE_MEMBERSHIP_CARD: result = "Moogle Membership Card"; break;
+		//	case EItem_GRAVEYARD_KEY: result = "Graveyard Key"; break;
+		//	case EItem_GUARDIAN_ANGELS_CALLING_CARDS: result = "Guardian Angel's Calling Cards"; break;
+		//	case EItem_SAMS_COIN: result = "Sam's Coin"; break;
+		//	case EItem_TOURNAMENT_ENTRY_FORM: result = "Tournament Entry Form"; break;
+		//	case EItem_FUZZY_WUZZY: result = "Fuzzy Wuzzy"; break;
+		//	case EItem_MR_CUDDLESWORTH: result = "Mr. Cuddlesworth"; break;
+		//	case EItem_SAMS_REQUESTS: result = "Sam's Requests"; break;
+		default: result = "unknown"; break;
+		}
+
+		return result;
+	}
+
+#pragma endregion
+
+	//----------------------------------------------------------------------------------------------------
+	//										AMATERIA
+	//-----------------------------------------------------------------------------------
+#pragma region	//	AMATERIA
+
+	__int32 AMateria::GetID() { return this->MateriaID; }
+
+	__int32 AMateria::GetNameID() { return this->NameID; }
+
+	std::string AMateria::GetName()
+	{
+		std::string result;
+
+		switch (NameID)
+		{
+		default: result = "unknown"; break;
+		}
+
+		return result;
 	}
 
 #pragma endregion
@@ -831,6 +905,20 @@ namespace FF7Remake
 	struct APlayerAttributes AGameState::GetCloudAttributes() { return GetPlayerAttributes(0); }											//	return this->mPamPartyAttributes[0];
 
 	void AGameState::SetCloudAttributes(const APlayerAttributes newAttributes) { SetPlayerAttributes(0, newAttributes); }	//	this->mPartyAttributes[0] = newAttributes; }
+	
+	struct AMateria* AGameState::GetMateria()
+	{
+		static constexpr auto offset{ 0x20A8 };
+
+		return reinterpret_cast<AMateria*>(((__int64)&this->pad_0000 + offset));
+	}
+
+	struct AItem* AGameState::GetItems()
+	{
+		static constexpr auto offset{ 0x35640 };
+
+		return reinterpret_cast<AItem*>(((__int64)&this->pad_0000 + offset));
+	}
 
 #pragma endregion
 
@@ -877,9 +965,9 @@ namespace FF7Remake
 	
 	AInventory* OnUseItem::GetInventory() { return reinterpret_cast<AInventory*>(*pInventory); }
 
-	AItemSlot* OnUseItem::GetCurrentItemSlot() { return GetItemSlot(); }
+	AItem* OnUseItem::GetCurrentItemSlot() { return GetItemSlot(); }
 
-	AItemSlot* OnUseItem::GetItemSlot(int index)
+	AItem* OnUseItem::GetItemSlot(int index)
 	{
 		/*
 			AItemSlot* result{ nullptr };
@@ -889,7 +977,7 @@ namespace FF7Remake
 			auto inv = reinterpret_cast<AInventory*>(z);
 			AItemSlot* result = &inv->Item;
 		*/
-		return &reinterpret_cast<AInventory*>(reinterpret_cast<__int64>(GetInventory()) + index * sizeof(AItemSlot))->Item;
+		return &reinterpret_cast<AInventory*>(reinterpret_cast<__int64>(GetInventory()) + index * sizeof(AItem))->Item;
 	}
 
 	int OnUseItem::GetCurrentItemCount()

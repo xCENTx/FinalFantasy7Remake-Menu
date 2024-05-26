@@ -232,7 +232,7 @@ namespace FF7Remake
 	bool D3D11Window::GetD3DContext()
 	{
 		if (!InitWindow())
-			return true;
+			return false;
 
 		HMODULE D3D11Module = GetModuleHandleA("d3d11.dll");
 
@@ -283,7 +283,6 @@ namespace FF7Remake
 		//	INIT NOTICE
 		Beep(300, 300);
 
-		MH_Initialize();
 		SwapChain->Release();
 		SwapChain = 0;
 		Device->Release();

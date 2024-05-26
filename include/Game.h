@@ -94,29 +94,102 @@ namespace FF7Remake
 		};
 	};
 	
-	struct AItemSlot
-	{
-		unsigned __int64					ID;						//0x0000
-		bool								isAvailable;			//0x0008
-		char								flag;					//0x0009
-		char								pad_000A[2];			//0x000A
-		int									count;					//0x000C
-		char								flag2;					//0x0010
-		char								pad_0011[7];			//0x0011
+	//	struct AItemSlot
+	//	{
+	//		unsigned __int64					ID;						//0x0000
+	//		bool								isAvailable;			//0x0008
+	//		char								flag;					//0x0009
+	//		char								pad_000A[2];			//0x000A
+	//		int									count;					//0x000C
+	//		char								flag2;					//0x0010
+	//		char								pad_0011[7];			//0x0011
+	//	};	//Size: 0x0018
 
-		//	
-		bool								IsValidIndex();
+	enum EItemType : __int32
+	{
+		EItemType_Item = 0,
+		EItemType_Unk1,
+		EItemType_KeyItem,
+		EItemType_Unk3,
+		EItemType_Unk8 = 8,
+		EItemType_Unk9,
+		EItemType_Unk10,
+	};
+
+	struct AItem
+	{
+		unsigned __int32					ID;					//0x0000
+		char								pad_0004[4];		//0x0004
+		int									type;				//0x0008
+		int									count;				//0x000C
+		enum EItemType						flag;				//0x0010
+		char								pad_0014[4];		//0x0014
+
+	public:
+		bool								IsItem();
+		__int32								GetID();
+		std::string							GetName();
 	};	//Size: 0x0018
+
+	struct AMateria
+	{
+		int									index;						//0x0000
+		char								pad_0004[4];				//0x0004
+		char								Level;						//0x0008
+		char								AssignedPartyMemberIndex;	//0x0009
+		char								pad_000A[2];				//0x000A
+		unsigned int						NameID;						//0x000C
+		int									TotalXP;					//0x0010
+		char								pad_0014[4];				//0x0014
+		int									MateriaID;					//0x0018
+		char								pad_001C[4];				//0x001C
+
+	public:
+		__int32								GetID();
+		__int32								GetNameID();
+		std::string							GetName();
+	};	//Size: 0x0020
+
+	struct AEquipment
+	{
+		char								pad_0000[80];				//0x0000
+		int									GilCost;					//0x0050
+		char								pad_0054[4];				//0x0054
+		int									GilSell;					//0x0058
+		unsigned char						N00000257;					//0x005C
+		char								pad_005D[19];				//0x005D
+		int									Attack;						//0x0070
+		char								pad_0074[4];				//0x0074
+		int									MagicAtk;					//0x0078
+		char								pad_007C[4];				//0x007C
+		int									Defense;					//0x0080
+		char								pad_0084[4];				//0x0084
+		int									MagicDefense;				//0x0088
+		char								pad_008C[4];				//0x008C
+		int									Strength;					//0x0090
+		char								pad_0094[4];				//0x0094
+		int									Magic;						//0x0098
+		char								pad_009C[4];				//0x009C
+		int									Vitality;					//0x00A0
+		char								pad_00A4[4];				//0x00A4
+		int									Spirit;						//0x00A8
+		char								pad_00AC[4];				//0x00AC
+		int									Luck;						//0x00B0
+		char								pad_00B4[108];				//0x00B4
+		char								LinkedMateriaSlots;			//0x0120
+		char								SingleMateriaSlots;			//0x0121
+	};	//Size: 0x0122
+
 
 	struct AInventory
 	{
-		struct AItemSlot					Item;					//0x0000
+		struct AItem						Item;					//0x0000
 		char								pad_0018[312];			//0x0018
 	};	//Size: 0x0150
 
 	struct AComponents
 	{
-		struct AInventory*					pItems;					//0x0000
+		struct AInventory*					pInventory;				//0x0000
 		char								pad_0008[120];			//0x0008
 	};	//Size: 0x0080
 
@@ -182,7 +255,8 @@ namespace FF7Remake
 		void								SetPlayerAttributes(int index, const APlayerAttributes newAttributes);
 		struct APlayerAttributes			GetCloudAttributes();
 		void								SetCloudAttributes(const APlayerAttributes newAttributes);
-
+		struct AMateria*					GetMateria();
+		struct AItem*						GetItems();
 	};	//Size: 0x0B28
 
 	class AGameBase
@@ -228,8 +302,8 @@ namespace FF7Remake
 		//	
 		class AGameState*					GetGameState();
 		struct AInventory*					GetInventory();
-		struct AItemSlot*					GetCurrentItemSlot();
-		struct AItemSlot*					GetItemSlot(int index = 0);
+		struct AItem*						GetCurrentItemSlot();
+		struct AItem*						GetItemSlot(int index = 0);
 		int									GetCurrentItemCount();
 	};	//Size: 0x0080
 
@@ -330,4 +404,6 @@ namespace FF7Remake
 	public:
 		//	contains virtual functions for setting and getting stagger / max stagger but indexes are very high
 	};
+
+
 }

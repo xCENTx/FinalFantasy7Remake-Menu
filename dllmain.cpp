@@ -168,7 +168,6 @@ DWORD WINAPI MainThread(LPVOID hInstance)
     }
 
     UPDATE.join();
-    std::this_thread::sleep_for(5ms);
     FreeLibraryAndExitThread(og_hModule, EXIT_SUCCESS);
 }
 

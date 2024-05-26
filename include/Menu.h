@@ -15,7 +15,6 @@ namespace FF7Remake
 		~Menu() noexcept = default;
 	};
 
-
 	class GUI
 	{
 	public:
