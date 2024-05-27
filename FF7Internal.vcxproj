@@ -198,6 +198,7 @@
     <ClCompile Include="libs\MinHook\hook.c" />
     <ClCompile Include="libs\MinHook\hookmain.cpp" />
     <ClCompile Include="libs\MinHook\trampoline.c" />
+    <ClCompile Include="Source.cpp" />
     <ClCompile Include="src\Engine.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\Menu.cpp" />

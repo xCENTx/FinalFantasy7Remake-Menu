@@ -1,9 +1,11 @@
-#include "Engine.h"
-#include "Menu.h"
+#pragma once
+#include <Menu.h>
+#include <Engine.h>
+#include <helper.h>
 
 IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-namespace FF7Remake 
+namespace DX11Base
 {
 	FILE*				Console::m_pOutStream{ nullptr };
 	bool				Console::m_bInit{ false };
@@ -232,7 +234,7 @@ namespace FF7Remake
 	bool D3D11Window::GetD3DContext()
 	{
 		if (!InitWindow())
-			return true;
+			return false;
 
 		HMODULE D3D11Module = GetModuleHandleA("d3d11.dll");
 
@@ -283,7 +285,6 @@ namespace FF7Remake
 		//	INIT NOTICE
 		Beep(300, 300);
 
-		MH_Initialize();
 		SwapChain->Release();
 		SwapChain = 0;
 		Device->Release();

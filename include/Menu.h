@@ -1,6 +1,7 @@
 #pragma once
-#include "helper.h"
-namespace FF7Remake 
+#include <Engine.h>
+
+namespace DX11Base
 {
 	class Menu
 	{
@@ -14,7 +15,6 @@ namespace FF7Remake
 		Menu()  noexcept = default;
 		~Menu() noexcept = default;
 	};
-
 
 	class GUI
 	{
