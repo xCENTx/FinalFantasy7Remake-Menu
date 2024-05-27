@@ -1,6 +1,10 @@
-#include "Game.h"
+#pragma once
+#include <Game.h>
+
 namespace FF7Remake 
 {
+	using namespace DX11Base;
+
 	//	STATICS
 	AGameBase*										AGame::gGameBase{ nullptr };
 	bool											AGame::bDemiGod{ false };
@@ -44,13 +48,13 @@ namespace FF7Remake
 	{
 
 		gGameBase									= reinterpret_cast<AGameBase*>(g_Engine->g_GameBaseAddr + Offsets::oGameBase);
-		Hooks::pXInput_State						= (g_Engine->g_GameBaseAddr + Offsets::oXinputState);
-		Hooks::pAScene_Update						= (g_Engine->g_GameBaseAddr + Offsets::oSceneUpdate);
-		Hooks::pAPlayerState_SetHealth				= (g_Engine->g_GameBaseAddr + Offsets::oSetHealth);
-		Hooks::pAPlayerState_SetMana				= (g_Engine->g_GameBaseAddr + Offsets::oSetMana);
-		Hooks::pAPlayerState_SubItem				= (g_Engine->g_GameBaseAddr + Offsets::oSubItem);
-		Hooks::pATargetEntity_GetHP					= (g_Engine->g_GameBaseAddr + Offsets::oTargetGetHP);
-		Hooks::pATargetEntity_GetStaggerAmount		= (g_Engine->g_GameBaseAddr + Offsets::oTargetGetStaggerAmount);
+		Hooks::pXInput_State						= (g_Engine->g_GameBaseAddr + FunctionOffsets::fnXinputState);
+		Hooks::pAScene_Update						= (g_Engine->g_GameBaseAddr + FunctionOffsets::fnSceneUpdate);
+		Hooks::pAPlayerState_SetHealth				= (g_Engine->g_GameBaseAddr + FunctionOffsets::fnSetHealth);
+		Hooks::pAPlayerState_SetMana				= (g_Engine->g_GameBaseAddr + FunctionOffsets::fnSetMana);
+		Hooks::pAPlayerState_SubItem				= (g_Engine->g_GameBaseAddr + FunctionOffsets::fnSubItem);
+		Hooks::pATargetEntity_GetHP					= (g_Engine->g_GameBaseAddr + FunctionOffsets::fnTargetGetHP);
+		Hooks::pATargetEntity_GetStaggerAmount		= (g_Engine->g_GameBaseAddr + FunctionOffsets::fnTargetGetStaggerAmount);
 
 
 
@@ -372,9 +376,9 @@ namespace FF7Remake
 		//	- Party Member Index & Stats
 		auto pSetHealth = OnSetHealth(index, health);
 
-		if (g_Console->m_bVerbose && pSetHealth.mDiff > 0)
+		if (g_Console->m_bVerbose && pSetHealth.Diff > 0)
 			Console::Log("[+] [Hooking::APlayerState_SetHealth_hook(%d, %d)]\n- diff: %d\n- isTakeDmg: %d\n- isHealing: %d\n- origHealth: %d / %d\n- newHealth: %d / %d\n- bNullDmg: %d\n\n",
-				index, health, pSetHealth.mDiff, pSetHealth.bTakingDmg, pSetHealth.bHealing, health + pSetHealth.mDiff, pSetHealth.mPlayerStats.MaxHP, health, pSetHealth.mPlayerStats.MaxHP, AGame::bNullDmg);
+				index, health, pSetHealth.Diff, pSetHealth.bTakingDmg, pSetHealth.bHealing, health + pSetHealth.Diff, pSetHealth.PlayerStats.MaxHP, health, pSetHealth.PlayerStats.MaxHP, AGame::bNullDmg);
 
 		//	prevent damage to party member
 		if (AGame::bNullDmg && pSetHealth.bTakingDmg)
@@ -475,12 +479,12 @@ namespace FF7Remake
 		//	- Party Member Index & Stats
 		auto pSetMana = OnSetMana(index, mana);
 
-		if (g_Console->m_bVerbose && pSetMana.mDiff > 0)
+		if (g_Console->m_bVerbose && pSetMana.Diff > 0)
 			Console::Log("[+] [Hooking::APlayerState_SetMana_hook(%d, %d)]\n- diff: %d\n- isUsingMana: %d\n- isHealingMana: %d\n- origMana: %d / %d\n- newMana: %d / %d\n- bNullMgk: %d\n\n",
-				index, mana, pSetMana.mDiff, pSetMana.bUsingMana, pSetMana.bHealing, mana + pSetMana.mDiff, pSetMana.mPlayerStats.MaxMP, mana, pSetMana.mPlayerStats.MaxMP, AGame::bNullMgk);
+				index, mana, pSetMana.Diff, pSetMana.bUsing, pSetMana.bRestoring, mana + pSetMana.Diff, pSetMana.PlayerStats.MaxMP, mana, pSetMana.PlayerStats.MaxMP, AGame::bNullMgk);
 
 		//	prevent damage to party member
-		if (AGame::bNullMgk && pSetMana.bUsingMana)
+		if (AGame::bNullMgk && pSetMana.bUsing)
 			return 0;
 
 		//	exec original fn
@@ -671,18 +675,18 @@ namespace FF7Remake
 		auto v11 = *(__int64**)(v4 + 0x48);							// inventory
 		AItem* v12 = reinterpret_cast<AItem*>(*v11);				// ItemSlot
 		int sub_amount = *((__int32*)v11 + 3);						// sub amount
-		int v13 = v12->count - sub_amount;							// sub item new amount
+		int v13 = v12->Count - sub_amount;							// sub item new amount
 
 		if (g_Console->m_bVerbose)
 			Console::Log("[+] [Hooking::APlayerState_SubItem(0x%llX, %d)]\n- subAmount: %d\n- origCount: %d\n- newCount: %d\n- bNullItem: %d\n\n",
-				p, index, sub_amount, v12->count, v13, AGame::bNullItem);
+				p, index, sub_amount, v12->Count, v13, AGame::bNullItem);
 
 		if (AGame::bNullItem)
 		{
 			auto result = APlayerState_SubItem_stub(p, index);
 
 			//	Set new amount ( revert change )
-			v12->count = (v13 + sub_amount);
+			v12->Count = (v13 + sub_amount);
 
 			return result;
 		}
@@ -774,12 +778,15 @@ namespace FF7Remake
 	bool AItem::IsItem()
 	{
 		bool result{ false };
-		
-		switch (flag)
+
+		switch (eItemType)
 		{
 			case EItemType_Item: result = true; break;
 			case EItemType_KeyItem: result = true; break;
 		}
+
+		if (Valid <= 0)
+			result = false;
 
 		return result;
 	}
@@ -880,7 +887,7 @@ namespace FF7Remake
 
 	struct AGameState* ACloudState::GetGameState()
 	{
-		return reinterpret_cast<AGameState*>(reinterpret_cast<__int64>(pad_0000) - 0x880);
+		return reinterpret_cast<AGameState*>(reinterpret_cast<__int64>(pad_0000) - Offsets::oGameBase_CloudState);
 	}
 
 #pragma endregion
@@ -890,17 +897,17 @@ namespace FF7Remake
 	//-----------------------------------------------------------------------------------
 #pragma region	//	AGAMESTATE
 
-	struct APlayerStats AGameState::GetPlayerStats(int index) { return this->mPartyStats[index]; }
+	struct APlayerStats AGameState::GetPlayerStats(int index) { return this->PartyStats[index]; }
 
-	void AGameState::SetPlayerStats(int index, const APlayerStats newStats) { this->mPartyStats[index] = newStats; }
+	void AGameState::SetPlayerStats(int index, const APlayerStats newStats) { this->PartyStats[index] = newStats; }
 
-	struct APlayerStats AGameState::GetCloudStats() { return this->mCloudState.mStats; }
+	struct APlayerStats AGameState::GetCloudStats() { return this->CloudState.Stats; }
 
-	void AGameState::SetCloudStats(const APlayerStats newState) { this->mCloudState.mStats = newState; }
+	void AGameState::SetCloudStats(const APlayerStats newState) { this->CloudState.Stats = newState; }
 
-	struct APlayerAttributes AGameState::GetPlayerAttributes(int index) { return this->mPartyAttributes[index]; }
+	struct APlayerAttributes AGameState::GetPlayerAttributes(int index) { return this->PartyAttributes[index]; }
 
-	void AGameState::SetPlayerAttributes(int index, const APlayerAttributes newAttributes) { this->mPartyAttributes[index] = newAttributes; }
+	void AGameState::SetPlayerAttributes(int index, const APlayerAttributes newAttributes) { this->PartyAttributes[index] = newAttributes; }
 
 	struct APlayerAttributes AGameState::GetCloudAttributes() { return GetPlayerAttributes(0); }											//	return this->mPamPartyAttributes[0];
 
@@ -908,16 +915,12 @@ namespace FF7Remake
 	
 	struct AMateria* AGameState::GetMateria()
 	{
-		static constexpr auto offset{ 0x20A8 };
-
-		return reinterpret_cast<AMateria*>(((__int64)&this->pad_0000 + offset));
+		return reinterpret_cast<AMateria*>(((__int64)&this->pad_0000 + Offsets::oGameBase_ItemsList));
 	}
 
 	struct AItem* AGameState::GetItems()
 	{
-		static constexpr auto offset{ 0x35640 };
-
-		return reinterpret_cast<AItem*>(((__int64)&this->pad_0000 + offset));
+		return reinterpret_cast<AItem*>(((__int64)&this->pad_0000 + Offsets::oGameBase_MateriaList));
 	}
 
 #pragma endregion
@@ -927,7 +930,7 @@ namespace FF7Remake
 	//-----------------------------------------------------------------------------------
 #pragma region	//	AGAMEBASE
 
-	bool AGameBase::Valid() { return this->mMatchState_0 <= 2; }
+	bool AGameBase::Valid() { return this->MatchState0 <= 2; }
 
 	class AGameState* AGameBase::GetGameState()
 	{
@@ -963,7 +966,7 @@ namespace FF7Remake
 
 	AGameState* OnUseItem::GetGameState() { return pCloudState->GetGameState(); }
 	
-	AInventory* OnUseItem::GetInventory() { return reinterpret_cast<AInventory*>(*pInventory); }
+	AInventory* OnUseItem::GetInventory() { return reinterpret_cast<AInventory*>(*ppInventory); }
 
 	AItem* OnUseItem::GetCurrentItemSlot() { return GetItemSlot(); }
 
@@ -987,7 +990,7 @@ namespace FF7Remake
 		auto inventory = GetInventory();
 
 		if (inventory)
-			result = inventory->Item.count;
+			result = inventory->Item.Count;
 
 		return result;
 	}
@@ -1018,11 +1021,11 @@ namespace FF7Remake
 			isTakeDmg = true;
 
 		index = i;
-		mNewHP = hp;
-		mDiff = diff;
+		NewHP = hp;
+		Diff = diff;
 		bHealing = isHealing;
 		bTakingDmg = isTakeDmg;
-		mPlayerStats = player_stats;
+		PlayerStats = player_stats;
 		pGameState = pGameS;
 	}
 
@@ -1052,11 +1055,11 @@ namespace FF7Remake
 			isSubMana = true;
 
 		index = i;
-		mNewMP = mp;
-		mDiff = diff;
-		bHealing = isHealing;
-		bUsingMana = isSubMana;
-		mPlayerStats = player_stats;
+		NewMP = mp;
+		Diff = diff;
+		bRestoring = isHealing;
+		bUsing = isSubMana;
+		PlayerStats = player_stats;
 		pGameState = pGameS;
 	}
 
@@ -1069,7 +1072,7 @@ namespace FF7Remake
 
 	bool ATarget::IsValid()
 	{
-		static __int64 TargetEntity_vfTable = g_Engine->g_GameBaseAddr + 0x4B3E5E8;
+		static __int64 TargetEntity_vfTable = g_Engine->g_GameBaseAddr + VtableOffsets::vfTargetEntity;
 		__int64 vfTable_addr = *(__int64*)((__int64)&this->Level - 0x8);
 		if (!vfTable_addr || vfTable_addr != TargetEntity_vfTable)
 			return false;

@@ -1,19 +1,49 @@
 #pragma once
-#include "Engine.h"
+#include <Engine.h>
+#include <Menu.h>
 
 namespace FF7Remake 
 {
+	/*
+	*		GENERAL GUIDELINES
+	* 
+	*	namespace		: global game member variables. should be constexpr as the values will never change.
+	*	struct			: offsets arranged with padding to align with game memory. member variables are public by default.
+	*	class			: implies the "struct" has virtual methods, member variables should be made private with methods for accessing data for safety
+	*	enum			: should be as close to the origin data structure as possible. i.e EItemType would reside above AItem
+	*	member vars		: [bool : b<name> : bValid] [enum : e<Name> : eType] [pointer : p<Name> : pInstance] [static pointer : g<Name>] [global : g_<prefix><Name> : g_bRunning]
+	*	A<StructName>	: all game engine general purpose class and struct names should be prefixed with A to signify it is a game engine related data structure
+	*	T<StructName>	: all game engine template class and struct names should be prefixed with T to signify that it is both a templated and game related data structure.
+	*	
+	*	ternary			: keep it basic and readable.
+	*	recursion		: would batman ?
+	*	
+
+	*/
+	
 	namespace Offsets
 	{
-		constexpr auto						oXinputState{ 0x1D1F920 };
-		constexpr auto						oGameBase{ 0x57B9260 };
-		constexpr auto						oSceneUpdate{ 0x16B44A0 };
-		constexpr auto						oSetHealth{ 0x0AFB6C0 };
-		constexpr auto						oSetMana{ 0x0AFB8D0 };
-		constexpr auto						oSubItem{ 0x0B1CAF0 };
-		constexpr auto						oTargetGetHP{ 0x08884C0 };
-		constexpr auto						oTargetGetStaggerAmount{ 0x0890620 };
+		constexpr auto						oGameBase{ 0x57B9260 };					//	48 8B 05 ? ? ? ? 4C 89 B4 24 ? ? ? ? 44 0F B6 76
+		constexpr auto						oGameBase_CloudState{ 0x880 };			//	Analyze APlayerState_SetHealth_hook
+		constexpr auto						oGameBase_ItemsList{ 0x35640 };			//	Analyze APlayerState_SubItem_hook
+		constexpr auto						oGameBase_MateriaList{ 0x20A8 };		//	
 	};
+
+	namespace FunctionOffsets
+	{
+		constexpr auto						fnXinputState{ 0x1D1F920 };				//	XInput_State_hook
+		constexpr auto						fnSceneUpdate{ 0x16B44A0 };				//	AScene_Update_hook
+		constexpr auto						fnSetHealth{ 0x0AFB6C0 };				//	APlayerState_SetHealth_hook
+		constexpr auto						fnSetMana{ 0x0AFB8D0 };					//	APlayerState_SetMana_hook
+		constexpr auto						fnSubItem{ 0x0B1CAF0 };					//	APlayerState_SubItem_hook
+		constexpr auto						fnTargetGetHP{ 0x08884C0 };				//	ATargetEntity_GetHP_hook
+		constexpr auto						fnTargetGetStaggerAmount{ 0x0890620 };	//	ATargetEntity_GetStaggerAmount_hook		
+	}
+
+	namespace VtableOffsets
+	{
+		constexpr auto						vfTargetEntity{ 0x4B3E5E8 };			//  Analyze ATargetEntity_GetHP_hook
+	}
 
 	class AGame
 	{
@@ -93,17 +123,6 @@ namespace FF7Remake
 			static __int64 pATargetEntity_GetStaggerAmount;
 		};
 	};
-	
-	//	struct AItemSlot
-	//	{
-	//		unsigned __int64					ID;						//0x0000
-	//		bool								isAvailable;			//0x0008
-	//		char								flag;					//0x0009
-	//		char								pad_000A[2];			//0x000A
-	//		int									count;					//0x000C
-	//		char								flag2;					//0x0010
-	//		char								pad_0011[7];			//0x0011
-	//	};	//Size: 0x0018
 
 	enum EItemType : __int32
 	{
@@ -118,12 +137,12 @@ namespace FF7Remake
 
 	struct AItem
 	{
-		unsigned __int32					ID;					//0x0000
-		char								pad_0004[4];		//0x0004
-		int									type;				//0x0008
-		int									count;				//0x000C
-		enum EItemType						flag;				//0x0010
-		char								pad_0014[4];		//0x0014
+		unsigned __int32					ID;							//0x0000
+		char								pad_0004[8];				//0x0004
+		int									Valid;						//0x0008
+		int									Count;						//0x000C
+		enum EItemType						eItemType;					//0x0010
+		char								pad_0014[4];				//0x0014
 
 	public:
 		bool								IsItem();
@@ -133,7 +152,7 @@ namespace FF7Remake
 
 	struct AMateria
 	{
-		int									index;						//0x0000
+		int									Index;						//0x0000
 		char								pad_0004[4];				//0x0004
 		char								Level;						//0x0008
 		char								AssignedPartyMemberIndex;	//0x0009
@@ -156,8 +175,9 @@ namespace FF7Remake
 		int									GilCost;					//0x0050
 		char								pad_0054[4];				//0x0054
 		int									GilSell;					//0x0058
-		unsigned char						N00000257;					//0x005C
-		char								pad_005D[19];				//0x005D
+		//	unsigned char						N00000257;					//0x005C
+		//	char								pad_005D[19];				//0x005D
+		char								pad_005C[20];				//0x005C
 		int									Attack;						//0x0070
 		char								pad_0074[4];				//0x0074
 		int									MagicAtk;					//0x0078
@@ -179,7 +199,6 @@ namespace FF7Remake
 		char								LinkedMateriaSlots;			//0x0120
 		char								SingleMateriaSlots;			//0x0121
 	};	//Size: 0x0122
-
 
 	struct AInventory
 	{
@@ -229,7 +248,7 @@ namespace FF7Remake
 	struct ACloudState
 	{
 		char								pad_0000[32];			//0x0000	//0x0880
-		struct APlayerStats					mStats;					//0x0020	//0x08C0
+		struct APlayerStats					Stats;					//0x0020	//0x08C0
 
 		//	
 		class AGameState*					GetGameState();
@@ -239,10 +258,10 @@ namespace FF7Remake
 	{
 	private:
 		char								pad_0000[2176];			//0x0000
-		struct ACloudState					mCloudState;			//0x0880
-		struct APlayerStats					mPartyStats[6];			//0x08E0
+		struct ACloudState					CloudState;				//0x0880
+		struct APlayerStats					PartyStats[6];			//0x08E0
 		char								pad_0A60[64];			//0x0A60
-		struct APlayerAttributes			mPartyAttributes[6];	//0x0AA0
+		struct APlayerAttributes			PartyAttributes[6];		//0x0AA0
 		char								pad_0B00[32];			//0x0B00
 		__int64								TotalGameTime;			//0x0B20
 	
@@ -261,8 +280,8 @@ namespace FF7Remake
 
 	class AGameBase
 	{
-		__int32								mMatchState_0;			//0x0000	//	0x08 at main menu	|	0x2 in story
-		__int32								mMatchState_1;			//0x0004	//	0x01 at main menu	|	0x1 in story
+		__int32								MatchState0;			//0x0000	//	0x08 at main menu	|	0x2 in story
+		__int32								MatchState1;			//0x0004	//	0x01 at main menu	|	0x1 in story
 		class AGameState*					pGameState;				//0x0008
 	
 	public:
@@ -296,7 +315,7 @@ namespace FF7Remake
 		struct ACloudState*					pCloudState;			//0x0018	//	AGameState->mCloudStats
 		char								pad_0020[40];			//0x0020
 		//	struct AComponents*					pComponents;			//0x0048
-		__int64**							pInventory;				//0x0048
+		__int64**							ppInventory;			//0x0048
 		char								pad_0050[48];			//0x0050
 
 		//	
@@ -310,10 +329,10 @@ namespace FF7Remake
 	struct OnSetHealth
 	{
 		class AGameState*					pGameState{ nullptr };
-		struct APlayerStats					mPlayerStats;
+		struct APlayerStats					PlayerStats;
 		int									index{ 0 };
-		int									mDiff{ 0 };
-		int									mNewHP{ 0 };
+		int									Diff{ 0 };
+		int									NewHP{ 0 };
 		bool								bHealing{ false };
 		bool								bTakingDmg{ false };
 
@@ -324,18 +343,18 @@ namespace FF7Remake
 	struct OnSetMana
 	{
 		class AGameState*					pGameState{ nullptr };
-		struct APlayerStats					mPlayerStats;
+		struct APlayerStats					PlayerStats;
 		int									index{ 0 };
-		int									mDiff{ 0 };
-		int									mNewMP{ 0 };
-		bool								bHealing{ false };
-		bool								bUsingMana{ false };
+		int									Diff{ 0 };
+		int									NewMP{ 0 };
+		bool								bRestoring{ false };
+		bool								bUsing{ false };
 
 		OnSetMana();
 		OnSetMana(int i, int mana);
 	};
 
-	struct ATarget
+	class ATarget
 	{
 	public:	//	@TODO: make private
 		int									Level;			//0x0008
@@ -394,7 +413,7 @@ namespace FF7Remake
 		bool								IsValid();		//	checks if matching vftable address
 	};	//Size: 0x0040
 
-	struct ATargetStagger
+	class ATargetStagger
 	{
 	public:	//	@TODO: make private
 		unsigned char						pad_0000[0xCF8];		//	0x0000
@@ -404,6 +423,5 @@ namespace FF7Remake
 	public:
 		//	contains virtual functions for setting and getting stagger / max stagger but indexes are very high
 	};
-
 
 }

@@ -1,9 +1,12 @@
-#include "Menu.h"
-#include "Engine.h"
-#include "Game.h"
+#pragma once
+#include <Menu.h>
+#include <Game.h>
+#include <helper.h>
 
-namespace FF7Remake 
+namespace DX11Base
 {
+    using namespace FF7Remake;
+
 	namespace Styles 
     {
         void InitStyle()
@@ -258,7 +261,7 @@ namespace FF7Remake
                 for (int i = 0; i < 65; i++)
                 {
                     AItem item = _itemsList[i];
-                    if (item.type == -1)
+                    if (item.Valid == -1)
                         break;
 
                     if (!item.IsItem())
@@ -269,7 +272,7 @@ namespace FF7Remake
                     if (ImGui::CollapsingHeader(std::to_string(i).c_str()))
                     {
                         ImGui::Text("ID: 0x%8X", (int*)&item.ID, 1, 0);
-                        ImGui::InputInt("COUNT", (int*)&item.count, 1, 0);
+                        ImGui::InputInt("COUNT", (int*)&item.Count, 1, 0);
                     }
 
                     ImGui::PopID();
@@ -290,12 +293,12 @@ namespace FF7Remake
                 for (int i = 0; i < 1000; i++)
                 {
                     AMateria materia = _materiaList[i];
-                    if (materia.index != i)
+                    if (materia.Index != i)
                         break;
 
                     ImGui::PushID(i);
 
-                    if (ImGui::CollapsingHeader(std::to_string(materia.index).c_str()))
+                    if (ImGui::CollapsingHeader(std::to_string(materia.Index).c_str()))
                     {
                         ImGui::Text("ID: 0x%8X", materia.MateriaID, 1, 0);
                         ImGui::Text("NAME ID: %d", materia.NameID, 1, 0);
@@ -345,7 +348,7 @@ namespace FF7Remake
             if (ImGui::Button("UNHOOK DLL", ImVec2(ImGui::GetWindowContentRegionWidth() - 3, 20))) 
             {
                 g_Engine->m_ShowMenu = false;
-                og_Killswitch = true;
+                g_bKillswitch = true;
             }
         }
 	}

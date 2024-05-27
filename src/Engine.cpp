@@ -1,9 +1,11 @@
-#include "Engine.h"
-#include "Menu.h"
+#pragma once
+#include <Menu.h>
+#include <Engine.h>
+#include <helper.h>
 
 IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-namespace FF7Remake 
+namespace DX11Base
 {
 	FILE*				Console::m_pOutStream{ nullptr };
 	bool				Console::m_bInit{ false };

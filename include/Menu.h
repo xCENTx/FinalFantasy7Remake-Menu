@@ -1,6 +1,7 @@
 #pragma once
-#include "helper.h"
-namespace FF7Remake 
+#include <Engine.h>
+
+namespace DX11Base
 {
 	class Menu
 	{
