@@ -5,7 +5,7 @@
 
 using namespace std::chrono_literals;
 inline HMODULE g_pModule{ nullptr };
-inline std::atomic_bool g_bRunning{ false };
+inline std::atomic_bool g_bRunning{ true };
 inline std::atomic_bool g_bKillswitch{ false };
 
 extern DWORD WINAPI MainThread(LPVOID hInstance);

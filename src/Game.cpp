@@ -915,12 +915,12 @@ namespace FF7Remake
 	
 	struct AMateria* AGameState::GetMateria()
 	{
-		return reinterpret_cast<AMateria*>(((__int64)&this->pad_0000 + Offsets::oGameBase_ItemsList));
+		return reinterpret_cast<AMateria*>(((__int64)&this->pad_0000 + Offsets::oGameBase_MateriaList));
 	}
 
 	struct AItem* AGameState::GetItems()
 	{
-		return reinterpret_cast<AItem*>(((__int64)&this->pad_0000 + Offsets::oGameBase_MateriaList));
+		return reinterpret_cast<AItem*>(((__int64)&this->pad_0000 + Offsets::oGameBase_ItemsList));
 	}
 
 #pragma endregion

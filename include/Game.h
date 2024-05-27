@@ -138,7 +138,7 @@ namespace FF7Remake
 	struct AItem
 	{
 		unsigned __int32					ID;							//0x0000
-		char								pad_0004[8];				//0x0004
+		char								pad_0004[4];				//0x0004
 		int									Valid;						//0x0008
 		int									Count;						//0x000C
 		enum EItemType						eItemType;					//0x0010

@@ -22,42 +22,44 @@
 - Navigate the menu with controller , keyboard and/or mouse
 
 ## UPDATING
-- Main Class  
--- qword_1457B9268
+<details>
+  <summary>Main Game Offset</summary>
+  https://github.com/xCENTx/FinalFantasy7Remake-Menu/blob/8bd9d81bc85dbcbe241434a0a570870344f01256/include/Game.h#L26
+</details>
   
 <details>
   <summary>Pause Game</summary>
-  https://github.com/xCENTx/FF7RemakeInternal/blob/2e5157693049e2f4597509ce1ed24129686ad7d7/src/Game.cpp#L264-L307
+  https://github.com/xCENTx/FinalFantasy7Remake-Menu/blob/8bd9d81bc85dbcbe241434a0a570870344f01256/src/Game.cpp#L268-L311
 </details>
 
 <details>
   <summary>Gamepad Input</summary>
-  https://github.com/xCENTx/FF7RemakeInternal/blob/2e5157693049e2f4597509ce1ed24129686ad7d7/src/Game.cpp#L249-L261
+  https://github.com/xCENTx/FinalFantasy7Remake-Menu/blob/8bd9d81bc85dbcbe241434a0a570870344f01256/src/Game.cpp#L253-L265
 </details>
 
 <details>
   <summary>Infinite Health</summary>
-  https://github.com/xCENTx/FF7RemakeInternal/blob/2e5157693049e2f4597509ce1ed24129686ad7d7/src/Game.cpp#L310-L385
+  https://github.com/xCENTx/FinalFantasy7Remake-Menu/blob/8bd9d81bc85dbcbe241434a0a570870344f01256/src/Game.cpp#L314-L389
 </details>
 
 <details>
   <summary>Infinite Mana</summary>
-  https://github.com/xCENTx/FF7RemakeInternal/blob/2e5157693049e2f4597509ce1ed24129686ad7d7/src/Game.cpp#L388-L488
+  https://github.com/xCENTx/FinalFantasy7Remake-Menu/blob/8bd9d81bc85dbcbe241434a0a570870344f01256/src/Game.cpp#L392-L492
 </details>
 
 <details>
   <summary>Infinite Items</summary>
-  https://github.com/xCENTx/FF7RemakeInternal/blob/2e5157693049e2f4597509ce1ed24129686ad7d7/src/Game.cpp#L491-L692
+  https://github.com/xCENTx/FinalFantasy7Remake-Menu/blob/8bd9d81bc85dbcbe241434a0a570870344f01256/src/Game.cpp#L495-L696
 </details>
 
 <details>
   <summary>Enemy Stats</summary>
-  https://github.com/xCENTx/FF7RemakeInternal/blob/2e5157693049e2f4597509ce1ed24129686ad7d7/src/Game.cpp#L695-L751
+  https://github.com/xCENTx/FinalFantasy7Remake-Menu/blob/8bd9d81bc85dbcbe241434a0a570870344f01256/src/Game.cpp#L699-L755
 </details>
 
 <details>
   <summary>Enemy Stagger</summary>
-  https://github.com/xCENTx/FF7RemakeInternal/blob/2e5157693049e2f4597509ce1ed24129686ad7d7/src/Game.cpp#L754-L764
+  https://github.com/xCENTx/FinalFantasy7Remake-Menu/blob/8bd9d81bc85dbcbe241434a0a570870344f01256/src/Game.cpp#L758-L768
 </details>
 
 ## CONTRIBUTING
@@ -65,7 +67,7 @@
 - Pull requests are welcome , please adhere to the coding guidlines as outlined below
 <details>
   <summary>GUIDELINES</summary>
-  https://github.com/xCENTx/FF7RemakeInternal/blob/e612bcb671b6558d44d3addc26331aa9fba8b200/include/Game.h#L7-L22
+  https://github.com/xCENTx/FinalFantasy7Remake-Menu/blob/8bd9d81bc85dbcbe241434a0a570870344f01256/include/Game.h#L7-L22
 </details>
 
 ### References & Credits
