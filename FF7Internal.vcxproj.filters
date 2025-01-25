@@ -24,9 +24,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="libs\ImGui\imconfig.h">
-      <Filter>Resource Files\ImGui</Filter>
-    </ClInclude>
     <ClInclude Include="libs\MinHook\buffer.h">
       <Filter>Resource Files\Minhook</Filter>
     </ClInclude>
@@ -72,25 +69,13 @@
     <ClInclude Include="include\helper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="libs\ImGui\imconfig.h">
+      <Filter>Resource Files\ImGui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="libs\ImGui\imgui.cpp">
-      <Filter>Resource Files\ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="libs\ImGui\imgui_demo.cpp">
-      <Filter>Resource Files\ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="libs\ImGui\imgui_draw.cpp">
-      <Filter>Resource Files\ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="libs\ImGui\imgui_tables.cpp">
-      <Filter>Resource Files\ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="libs\ImGui\imgui_widgets.cpp">
-      <Filter>Resource Files\ImGui</Filter>
     </ClCompile>
     <ClCompile Include="libs\MinHook\buffer.c">
       <Filter>Resource Files\Minhook</Filter>
@@ -122,11 +107,26 @@
     <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="libs\ImGui\imgui_impl_win32.cpp">
+    <ClCompile Include="libs\ImGui\backends\imgui_impl_win32.cpp">
       <Filter>Resource Files\ImGui\backends</Filter>
     </ClCompile>
-    <ClCompile Include="libs\ImGui\imgui_impl_dx11.cpp">
+    <ClCompile Include="libs\ImGui\backends\imgui_impl_dx11.cpp">
       <Filter>Resource Files\ImGui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\ImGui\imgui_tables.cpp">
+      <Filter>Resource Files\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\ImGui\imgui_widgets.cpp">
+      <Filter>Resource Files\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\ImGui\imgui.cpp">
+      <Filter>Resource Files\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\ImGui\imgui_demo.cpp">
+      <Filter>Resource Files\ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\ImGui\imgui_draw.cpp">
+      <Filter>Resource Files\ImGui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
