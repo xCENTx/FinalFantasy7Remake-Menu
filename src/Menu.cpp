@@ -96,7 +96,7 @@ namespace DX11Base
                 return;
             }
 
-            ImGui::TextCentered("FINAL FANTASY VII REMAKE INTERNAL MENU");
+            GUI::TextCentered("FINAL FANTASY VII REMAKE INTERNAL MENU");
             ImGui::Text("PRESS [INSERT] OR [L3 + R3] TO SHOW THE MENU");
             ImGui::Separator();
             ImGui::TextColored(ImColor(255, 0, 0, 255), "MENU v1.2 | Released: May 23, 2024");
@@ -127,7 +127,7 @@ namespace DX11Base
                 attributes = pGameState->GetPlayerAttributes(index + 1);
             }
 
-            ImGui::TextCentered("PLAYER STATS");
+            GUI::TextCentered("PLAYER STATS");
             ImGui::Spacing();
 
             if (ImGui::InputInt("##HP1", &stats.HP))
@@ -320,16 +320,16 @@ namespace DX11Base
 
 
             //  ImGui::RadioButton
-            ImGui::Toggle("DEMI GOD", &AGame::bDemiGod);
-            ImGui::Toggle("DEMI MANA", &AGame::bDemiGodMagic);
-            ImGui::Toggle("MAX LIMIT", &AGame::bMaxLimit);
-            ImGui::Toggle("MAX ATB", &AGame::bMaxATB);
-            ImGui::Toggle("NO HP LOSS", &AGame::bNullDmg);
-            ImGui::Toggle("NO MANA LOSS", &AGame::bNullMgk);
-            ImGui::Toggle("NO ITEM LOSS", &AGame::bNullItem);
-            ImGui::Toggle("XP MOD", &AGame::bXpFarm);
+            GUI::Toggle("DEMI GOD", &AGame::bDemiGod);
+            GUI::Toggle("DEMI MANA", &AGame::bDemiGodMagic);
+            GUI::Toggle("MAX LIMIT", &AGame::bMaxLimit);
+            GUI::Toggle("MAX ATB", &AGame::bMaxATB);
+            GUI::Toggle("NO HP LOSS", &AGame::bNullDmg);
+            GUI::Toggle("NO MANA LOSS", &AGame::bNullMgk);
+            GUI::Toggle("NO ITEM LOSS", &AGame::bNullItem);
+            GUI::Toggle("XP MOD", &AGame::bXpFarm);
 
-            if (ImGui::Toggle("MODIFY TIME SCALE", &AGame::bModTimeScale) && !AGame::bModTimeScale)
+            if (GUI::Toggle("MODIFY TIME SCALE", &AGame::bModTimeScale) && !AGame::bModTimeScale)
                 AGame::fTimeScalar = 1.0f;
             if (AGame::bModTimeScale)
             {
@@ -449,11 +449,11 @@ namespace DX11Base
         void TABenemies()
         {
 
-            //  ImGui::Toggle("STUPIFY", &AGame::bNoTargetAttack);
-            ImGui::Toggle("NO DAMAGE", &AGame::bNullTargetDmg);
-            ImGui::Toggle("AUTO STAGGER", &AGame::bTargetAlwaysStagger);
-            ImGui::Toggle("1 HIT KILLS", &AGame::bKillTarget);
-            ImGui::Toggle("MODIFY LEVEL", &AGame::bModTargetLevel);
+            //  GUI::Toggle("STUPIFY", &AGame::bNoTargetAttack);
+            GUI::Toggle("NO DAMAGE", &AGame::bNullTargetDmg);
+            GUI::Toggle("AUTO STAGGER", &AGame::bTargetAlwaysStagger);
+            GUI::Toggle("1 HIT KILLS", &AGame::bKillTarget);
+            GUI::Toggle("MODIFY LEVEL", &AGame::bModTargetLevel);
             if (AGame::bModTargetLevel)
                 ImGui::InputInt("LEVEL", &AGame::iLevelScalar);
 
@@ -473,7 +473,7 @@ namespace DX11Base
             ImGui::Separator();
             ImGui::Spacing();
 
-            if (ImGui::Button("UNHOOK DLL", ImVec2(ImGui::GetWindowContentRegionWidth() - 3, 20))) 
+            if (ImGui::Button("UNHOOK DLL", ImVec2(ImGui::GetContentRegionAvail().x - 3, 20))) 
             {
                 g_Engine->m_ShowMenu = false;
                 g_bKillswitch = true;
@@ -621,78 +621,206 @@ namespace DX11Base
     //										GUI
     //-----------------------------------------------------------------------------------
 
-    void GUI::TextCentered(const char* pText)
+    void GUI::TextCentered(const std::string& pText)
     {
-        ImGui::TextCentered(pText);
+        ImVec2 textSize = ImGui::CalcTextSize(pText.c_str());
+        ImVec2 windowSize = ImGui::GetWindowSize();
+        ImVec2 textPos = ImVec2((windowSize.x - textSize.x) * 0.5f, (windowSize.y - textSize.y) * 0.5f);
+        ImGui::SetCursorPos(textPos);
+        ImGui::Text("%s", pText.c_str());
     }
 
-    //  @ATTN: max buffer is 256chars
-    void GUI::TextCenteredf(const char* pText, ...)
+    void GUI::TextCenteredf(const std::string pText, ...)
     {
-        ImGuiContext& g = *GImGui;
-
+        float windowWidth = ImGui::GetWindowSize().x;
+        float textWidth = ImGui::CalcTextSize(pText.c_str()).x;
+        ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
         va_list args;
         va_start(args, pText);
-        const char* text_end = g.TempBuffer + ImFormatStringV(g.TempBuffer, IM_ARRAYSIZE(g.TempBuffer), pText, args);
-        TextCentered(g.TempBuffer);
+        ImGui::TextV(pText.c_str(), args);
         va_end(args);
     }
 
-    void GUI::DrawText_(ImVec2 pos, ImColor color, const char* pText, float fontSize)
+    void GUI::Tooltip(const std::string& tip)
     {
-        ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), fontSize, pos, color, pText, pText + strlen(pText), 800, 0);
+        if (!ImGui::IsItemHovered())
+            return;
+
+        ImGui::SetTooltip(tip.c_str());
     }
 
-    //  @ATTN: max buffer is 256chars
-    void GUI::DrawTextf(ImVec2 pos, ImColor color, const char* pText, float fontSize, ...)
+    bool GUI::Toggle(const std::string& label, bool* v)
     {
-        va_list args;
-        va_start(args, fontSize);
-        char buffer[256];
-        vsnprintf(buffer, sizeof(buffer), pText, args);
-        va_end(args);
+        using namespace ImGui;
 
-        DrawText_(pos, color, buffer, fontSize);
-    }
+        ImGuiWindow* window = GetCurrentWindow();
+        if (window->SkipItems)
+            return false;
 
-    void GUI::DrawTextCentered(ImVec2 pos, ImColor color, const char* pText, float fontSize)
-    {
-        float textSize = ImGui::CalcTextSize(pText).x;
-        ImVec2 textPosition = ImVec2(pos.x - (textSize * 0.5f), pos.y);
-        DrawText_(textPosition, color, pText, fontSize);
-    }
+        ImGuiContext& g = *GImGui;
+        const ImGuiStyle& style = g.Style;
+        const ImGuiID id = window->GetID(label.c_str());
+        const ImVec2 label_size = CalcTextSize(label.c_str(), NULL, true);
 
-    //  @ATTN: max buffer is 256chars
-    void GUI::DrawTextCenteredf(ImVec2 pos, ImColor color, const char* pText, float fontSize, ...)
-    {
-        va_list args;
-        va_start(args, fontSize);
-        char buffer[256];
-        vsnprintf(buffer, sizeof(buffer), pText, args);
-        va_end(args);
+        const float square_sz = GetFrameHeight();
+        ImVec2 pos = window->DC.CursorPos;
 
-        DrawTextCentered(pos, color, pText, fontSize);
-    }
+        const ImRect total_bb(pos, pos + ImVec2(square_sz + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f), label_size.y + style.FramePadding.y * 2.0f));
+        ItemSize(total_bb, style.FramePadding.y);
+        if (!ItemAdd(total_bb, id))
+            return false;
 
-    //  @ATTN: max buffer is 256chars
-    void GUI::DrawTextWindow(ImVec2 pos, const char* fmt, ...)
-    {
-
-        va_list args;
-        va_start(args, fmt);
-        char buffer[256];
-        vsnprintf(buffer, sizeof(buffer), fmt, args);
-        va_end(args);
-
-        ImGui::SetNextWindowPos(pos);
-        if (!ImGui::Begin(std::string("##").append(buffer).c_str(), 0, 103))
+        bool hovered, held;
+        bool pressed = ButtonBehavior(total_bb, id, &hovered, &held);
+        if (pressed)
         {
-            ImGui::End();
+            *v = !(*v);
+            MarkItemEdited(id);
+        }
+
+
+        //  COLOR PROPERTIES
+        ImU32 uncheck_col = GetColorU32(ImGuiCol_FrameBg);
+        // ImColor uncheck_col = ImColor(42, 42, 42, 255);// GetColorU32(ImGuiCol_FrameBg);
+        ImU32 circle_col = GetColorU32(ImGuiCol_NavWindowingDimBg);
+        //ImU32 check_col = GetColorU32(ImGuiCol_CheckMark);
+        ImU32 check_col = ImColor(42, 42, 42, 255);;
+
+        //  Position
+        const ImRect check_bb(pos, ImVec2(pos.x, pos.y) + ImVec2(square_sz * 1.5, square_sz * 0.8));
+        RenderNavHighlight(total_bb, id);
+        auto col = GetColorU32((held && hovered) ? ImGuiCol_FrameBgActive : hovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg);
+        ImVec2 UpperLeft(check_bb.GetTL().x, check_bb.GetTL().y + 2.f);
+        ImVec2 LowerRight(check_bb.GetBR().x, check_bb.GetBR().y + 2.f);
+        ImRect newRect(UpperLeft, LowerRight);
+        window->DrawList->AddRectFilled(newRect.Min, newRect.Max, uncheck_col, 10); //  Color
+        ImVec2 sUpperLeft(check_bb.GetTL().x, check_bb.GetTL().y + 2.f);
+        ImVec2 sLowerRight(check_bb.GetCenter().x, check_bb.GetBR().y + 2.f);
+        ImRect sRect(sUpperLeft, sLowerRight);
+        window->DrawList->AddRectFilled(sRect.Min, sRect.Max, circle_col, 10);  // COLOR
+
+        //reset
+        if (*v) 
+        {
+            window->DrawList->AddRectFilled(ImVec2(newRect.Min.x - 1.f, newRect.Min.y - 1.f), ImVec2(newRect.Max.x + .5f, newRect.Max.y + 1.f), check_col, 10); //  COLOR
+            ImVec2 tUpperLeft(check_bb.GetCenter().x, check_bb.GetTL().y + 2.f);
+            ImVec2 tLowerRight(check_bb.GetBR().x, check_bb.GetBR().y + 2.f);
+            ImRect tRect(tUpperLeft, tLowerRight);
+            window->DrawList->AddRectFilled(tRect.Min, tRect.Max, circle_col, 10);
+        }
+
+        if (label_size.x > 0.0f)
+            RenderText(ImVec2(check_bb.Max.x + style.ItemInnerSpacing.x, check_bb.Min.y + style.FramePadding.y), label.c_str());
+
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window->DC.ItemFlags | ImGuiItemStatusFlags_Checkable | (*v ? ImGuiItemStatusFlags_Checked : 0));
+        return pressed;
+    }
+
+    void GUI::DrawText_(const ImVec2& pos, const ImColor& color, const std::string& text, const float& szFont)
+    {
+        ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), szFont, pos, color, text.c_str(), text.c_str() + text.size(), 800.f, nullptr);
+    }
+
+    void GUI::DrawBGText(const ImVec2& pos, const ImColor& color, const std::string& text, const ImColor& background, const float& szFont)
+    {
+        auto pFont = ImGui::GetFont();
+        const ImVec2& textSize = ImGui::CalcTextSize(text.c_str());
+        ImRect textRect = ImRect(pos, pos + textSize);
+        if (szFont > 0.f)
+        {
+            const ImVec2& scaledTextSize = ImVec2(textSize.x * szFont / pFont->FontSize, szFont);
+            ImVec2 scaledTextPos = ImVec2(pos.x - (scaledTextSize.x * .5f), pos.y);
+        }
+        ImGui::GetWindowDrawList()->AddRectFilled(textRect.Min, textRect.Max, background);
+        DrawText_(textRect.Min, color, text, szFont);
+    }
+
+    void GUI::DrawBorderText(const ImVec2& pos, const ImColor& color, const std::string& text, const ImColor& border, const float& szFont)
+    {
+        auto pFont = ImGui::GetFont();
+        const ImVec2& textSize = ImGui::CalcTextSize(text.c_str());
+        ImRect textRect = ImRect(pos, pos + textSize);
+        if (szFont > 0.f)
+        {
+            const ImVec2& scaledTextSize = ImVec2(textSize.x * szFont / pFont->FontSize, szFont);
+            ImVec2 scaledTextPos = ImVec2(pos.x - (scaledTextSize.x * .5f), pos.y);
+            textRect = (ImRect(scaledTextPos, scaledTextPos + scaledTextSize));
+        }
+        ImGui::GetWindowDrawList()->AddRect(textRect.Min, textRect.Max, border);
+        DrawText_(textRect.Min, color, text, szFont);
+    }
+
+    void GUI::DrawTextCentered(const ImVec2& pos, const ImColor& color, const std::string& text, const float& szFont)
+    {
+        const ImVec2& textSize = ImGui::CalcTextSize(text.c_str());
+        ImVec2 textPosition = ImVec2(pos.x - (textSize.x * 0.5f), pos.y);
+        if (szFont <= 0.f)
+        {
+            DrawText_(textPosition, color, text, szFont);
             return;
         }
 
-        ImGui::Text("%s", buffer);
+        auto pFont = ImGui::GetFont();
+        ImVec2 scaledTextSize = ImVec2(textSize.x * szFont / pFont->FontSize, szFont);
+        ImVec2 scaledTextPos = ImVec2(pos.x - (scaledTextSize.x * .5f), pos.y);
+        DrawText_(scaledTextPos, color, text, szFont);
+    }
 
-        ImGui::End();
+    void GUI::DrawBGTextCentered(const ImVec2& pos, const ImColor& color, const std::string& text, const ImColor& background, const float& szFont)
+    {
+        const ImVec2& textSize = ImGui::CalcTextSize(text.c_str());
+        ImVec2 textPosition = ImVec2(pos.x - (textSize.x * 0.5f), pos.y);
+        if (szFont <= 0.f)
+        {
+            DrawBGText(textPosition, color, text, background, szFont);
+            return;
+        }
+
+        auto pFont = ImGui::GetFont();
+        ImVec2 scaledTextSize = ImVec2(textSize.x * szFont / pFont->FontSize, szFont);
+        ImVec2 scaledTextPos = ImVec2(pos.x - (scaledTextSize.x * .5f), pos.y);
+        ImGui::GetWindowDrawList()->AddRectFilled(scaledTextPos, scaledTextPos + scaledTextSize, background);
+        DrawText_(scaledTextPos, color, text, szFont);
+    }
+
+    void GUI::DrawBorderTextCentered(const ImVec2& pos, const ImColor& color, const std::string& text, const ImColor& border, const float& szFont)
+    {
+        const ImVec2& textSize = ImGui::CalcTextSize(text.c_str());
+        ImVec2 textPosition = ImVec2(pos.x - (textSize.x * 0.5f), pos.y);
+        if (szFont <= 0.f)
+        {
+            DrawBorderText(textPosition, color, text, border, szFont);
+            return;
+        }
+
+        auto pFont = ImGui::GetFont();
+        ImVec2 scaledTextSize = ImVec2(textSize.x * szFont / pFont->FontSize, szFont);
+        ImVec2 scaledTextPos = ImVec2(pos.x - (scaledTextSize.x * .5f), pos.y);
+        ImGui::GetWindowDrawList()->AddRect(scaledTextPos, scaledTextPos + scaledTextSize, border);
+        DrawText_(scaledTextPos, color, text, szFont);
+    }
+
+    void GUI::Line(const ImVec2& posA, const ImVec2& posB, const ImColor& color, const float& thickness)
+    {
+        ImGui::GetWindowDrawList()->AddLine(posA, posB, color, thickness);
+    }
+
+    void GUI::Circle(const ImVec2& pos, const ImColor& color, const float& radius, const float& thickness, const float& segments)
+    {
+        ImGui::GetWindowDrawList()->AddCircle(pos, radius, color, segments, thickness);
+    }
+
+    void GUI::CleanLine(const ImVec2& posA, const ImVec2& posB, const ImColor& color, const float& thickness)
+    {
+        Line(posA, posB, ImColor(0.0f, 0.0f, 0.0f, color.Value.w), (thickness + 0.25));
+        Line(posA, posB, ImColor(1.0f, 1.0f, 1.0f, color.Value.w), (thickness + 0.15));
+        Line(posA, posB, color, thickness);
+    }
+
+    void GUI::CleanCircle(const ImVec2& pos, const ImColor& color, const float& radius, const float& thickness, const float& segments)
+    {
+        Circle(pos, ImColor(0.0f, 0.0f, 0.0f, color.Value.w), radius, thickness, segments);
+        Circle(pos, ImColor(1.0f, 1.0f, 1.0f, color.Value.w), radius, thickness, segments);
+        Circle(pos, color, radius, thickness, segments);
     }
 }

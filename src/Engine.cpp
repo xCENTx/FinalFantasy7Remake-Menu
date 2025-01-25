@@ -349,7 +349,9 @@ namespace DX11Base
 			ImGui_ImplWin32_Init(g_Engine->g_GameWindow);
 			ImGui_ImplDX11_Init(m_Device, m_DeviceContext);
 			ImGui_ImplDX11_CreateDeviceObjects();
-			ImGui::GetIO().ImeWindowHandle = g_Engine->g_GameWindow;
+
+			ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+			main_viewport->PlatformHandleRaw = g_Engine->g_GameWindow;
 			m_OldWndProc = (WNDPROC)SetWindowLongPtr(g_Engine->g_GameWindow, GWLP_WNDPROC, (__int3264)(LONG_PTR)WndProc);
 			b_ImGui_Initialized = true;
 			m_pSwapChain = swapChain;
