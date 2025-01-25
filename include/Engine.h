@@ -46,8 +46,10 @@ namespace DX11Base
 
 		//	MENU
 		bool								m_ShowMenu{ false };
-		bool								m_ShowHud{ false };
+		bool								m_ShowHud{ true };
 		bool								m_ShowDemo{ false };
+		bool								m_ShowWelcome{ false };
+		
 	public:
 		void								Init();
 

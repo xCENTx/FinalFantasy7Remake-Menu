@@ -19,30 +19,12 @@
     <Filter Include="Resource Files\Minhook">
       <UniqueIdentifier>{dfc4a574-85ab-4f58-8164-ea568106e868}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\ImGui\backends">
+      <UniqueIdentifier>{6b0d2f9f-2e6e-4a46-9db8-91612998cbab}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="libs\ImGui\imconfig.h">
-      <Filter>Resource Files\ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\ImGui\imgui.h">
-      <Filter>Resource Files\ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\ImGui\imgui_impl_dx11.h">
-      <Filter>Resource Files\ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\ImGui\imgui_impl_win32.h">
-      <Filter>Resource Files\ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\ImGui\imgui_internal.h">
-      <Filter>Resource Files\ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\ImGui\imstb_rectpack.h">
-      <Filter>Resource Files\ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\ImGui\imstb_textedit.h">
-      <Filter>Resource Files\ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="libs\ImGui\imstb_truetype.h">
       <Filter>Resource Files\ImGui</Filter>
     </ClInclude>
     <ClInclude Include="libs\MinHook\buffer.h">
@@ -104,12 +86,6 @@
     <ClCompile Include="libs\ImGui\imgui_draw.cpp">
       <Filter>Resource Files\ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="libs\ImGui\imgui_impl_dx11.cpp">
-      <Filter>Resource Files\ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="libs\ImGui\imgui_impl_win32.cpp">
-      <Filter>Resource Files\ImGui</Filter>
-    </ClCompile>
     <ClCompile Include="libs\ImGui\imgui_tables.cpp">
       <Filter>Resource Files\ImGui</Filter>
     </ClCompile>
@@ -145,6 +121,12 @@
     </ClCompile>
     <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\ImGui\imgui_impl_win32.cpp">
+      <Filter>Resource Files\ImGui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\ImGui\imgui_impl_dx11.cpp">
+      <Filter>Resource Files\ImGui\backends</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

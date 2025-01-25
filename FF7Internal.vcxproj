@@ -29,26 +29,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -164,13 +164,6 @@
     <ClInclude Include="include\helper.h" />
     <ClInclude Include="include\Menu.h" />
     <ClInclude Include="libs\ImGui\imconfig.h" />
-    <ClInclude Include="libs\ImGui\imgui.h" />
-    <ClInclude Include="libs\ImGui\imgui_impl_dx11.h" />
-    <ClInclude Include="libs\ImGui\imgui_impl_win32.h" />
-    <ClInclude Include="libs\ImGui\imgui_internal.h" />
-    <ClInclude Include="libs\ImGui\imstb_rectpack.h" />
-    <ClInclude Include="libs\ImGui\imstb_textedit.h" />
-    <ClInclude Include="libs\ImGui\imstb_truetype.h" />
     <ClInclude Include="libs\MinHook\buffer.h" />
     <ClInclude Include="libs\MinHook\framework.h" />
     <ClInclude Include="libs\MinHook\hde32.h" />

@@ -6,7 +6,8 @@ namespace FF7Remake
 {
 	/*
 	*		GENERAL GUIDELINES
-	* 
+	
+	//	classes , structs, methods and members
 	*	namespace		: global game member variables. should be constexpr as the values will never change.
 	*	struct			: offsets arranged with padding to align with game memory. member variables are public by default.
 	*	class			: implies the "struct" has virtual methods, member variables should be made private with methods for accessing data for safety
@@ -14,7 +15,10 @@ namespace FF7Remake
 	*	member vars		: [bool : b<name> : bValid] [enum : e<Name> : eType] [pointer : p<Name> : pInstance] [static pointer : g<Name>] [global : g_<prefix><Name> : g_bRunning]
 	*	A<StructName>	: all game engine general purpose class and struct names should be prefixed with A to signify it is a game engine related data structure
 	*	T<StructName>	: all game engine template class and struct names should be prefixed with T to signify that it is both a templated and game related data structure.
-	*	
+	*	S<StructName>	: all custom methods acting as wrappers to join game info should be prefixed with S to signify that it acts as an extention to the game
+	*	C<ClassName>	: Similiar to S<StructName> all classes which are helper / wrapper methods for the game shall be prefixed with C to signifay that it acts as an extension to the game.
+	
+	//	techniques
 	*	ternary			: keep it basic and readable.
 	*	recursion		: would batman ?
 	*	
@@ -45,10 +49,14 @@ namespace FF7Remake
 		constexpr auto						vfTargetEntity{ 0x4B3E5E8 };			//  Analyze ATargetEntity_GetHP_hook
 	}
 
+	
+
 	class AGame
 	{
 	public:
 		static class AGameBase*				gGameBase;				//0x0000
+		static int							iSelectedPlayerIndex;
+		static bool							bSelectedPlayer[7];
 		static bool							bDemiGod;
 		static bool							bDemiGodMagic;
 		static bool							bMaxLimit;
@@ -66,7 +74,8 @@ namespace FF7Remake
 		static bool							bNullTargetDmg;			//	target takes no damage
 		static bool							bTargetAlwaysStagger;	//	target defense is set to 0
 		static bool							bXpFarm;				//	sets targets hp to 0, prevents targets from attacking , sets target stagger to max and sets target to max level for max reward
-	
+		static struct STargetInfo			sTargetEntity;			//
+
 	public:
 		static void							InitGame();
 		static void							ShutdownGame();
@@ -82,6 +91,10 @@ namespace FF7Remake
 			static void						RefillPartyMP();
 			static void						PartyMaxLimit();
 			static void						PartyMaxATB();
+			static void						RefillPlayerHP(int index);
+			static void						RefillPlayerMP(int index);
+			static void						PlayerMaxLimit(int index);
+			static void						PlayerMaxATB(int index);
 		};
 
 	public:
@@ -148,7 +161,52 @@ namespace FF7Remake
 		bool								IsItem();
 		__int32								GetID();
 		std::string							GetName();
+		std::string							GetName(int index);
 	};	//Size: 0x0018
+
+	enum EMateria : unsigned __int32
+	{
+		//	MAGIC
+		EMateria_Healing = 0x2711,
+		EMateria_Cleansing = 0x2712,
+		EMateria_Revival = 0x2713,
+		EMateria_Fire = 0x2714,
+		EMateria_Ice = 0x2715,
+		EMateria_Lightning = 0x2716,
+		EMateria_UnkMagic0 = 0x2718,
+		EMateria_UnkMagic1 = 0x2719,
+		EMateria_UnkMagic2 = 0x271A,
+		EMateria_Barrier = 0x271B,
+		EMateria_UnkMagic3 = 0x271C,
+
+		//	SUPPORT
+		EMateria_UnkSupport0 = 0x2AF9,
+		EMateria_Elemental = 0x2AFA,
+		EMateria_UnkSupport1 = 0x2AFA,
+		EMateria_UnkSupport2 = 0x2AFF,
+
+		//	COMMAND
+		EMateria_Assess = 0x2EE2,
+		EMateria_Chakra = 0x2EE4,
+		EMateria_Prayer = 0x2EE5,
+		EMateria_DeadlyDodge = 0x32D4,
+
+		//	BUFF
+		EMateria_AutoCure = 0x32D7,
+		EMateria_UnkBuff0 = 0x32CA,
+		EMateria_UnkBuff1 = 0x32D4,	
+		EMateria_UnkBuff2 = 0x32DA,	
+		EMateria_UnkBuff3 = 0x32CA,
+		EMateria_UnkBuff4 = 0x32CB,
+		EMateria_UnkBuff5 = 0x32CC,
+		EMateria_UnkBuff6 = 0x36B1,
+		EMateria_UnkBuff7 = 0x36B2,
+		EMateria_UnkBuff8 = 0x36B3,
+		EMateria_UnkBuff9 = 0x36B6,
+		EMateria_UnkBuff10 = 0x36B7,
+		EMateria_UnkBuff11 = 0x36B8,
+		EMateria_UnkBuff12 = 0x36B9,
+	};
 
 	struct AMateria
 	{
@@ -424,4 +482,33 @@ namespace FF7Remake
 		//	contains virtual functions for setting and getting stagger / max stagger but indexes are very high
 	};
 
+	//	@TODO: retrieve information from the assess target page. 
+	//	- there should be a function to retrieve this data
+	struct STargetInfo
+	{
+		bool								bValid{ false };		//	OSD
+		int									Level{ 0 };
+		float								SpAtkTime{ 0.0f };
+		float								SpAtkTimeMax{ 0.0f };
+		float								AttackRate{ 0.0f };
+		int									HP{ 0 };
+		int									HPMax{ 0 };
+		int									Attack{ 0 };
+		int									MagicAtk{ 0 };
+		int									Defense{ 0 };
+		int									MagicDefense{ 0 };
+		float								Stagger{ 0.0f };
+		float								StaggerMax{ 0.0f };
+
+		bool								Update();
+		void								StaggerUpdate(class ATargetStagger* sInfo);
+		void								ClearTarget();
+		bool								IsCurrentTarget(class ATarget* pCmp);
+
+		STargetInfo();
+		STargetInfo(ATarget* p);
+		
+	private:
+		class ATarget*						pTarget{ nullptr };
+	};
 }

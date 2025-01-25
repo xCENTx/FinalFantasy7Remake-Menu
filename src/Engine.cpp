@@ -403,7 +403,7 @@ namespace DX11Base
 	{
 		//	@TODO: should be included as an init method for d3dwindow class
 		if (Console::m_bGUI && g_D3D11Window->HookD3D())
-			g_Engine->m_ShowHud = true;
+			g_Engine->m_ShowWelcome = true;
 
 		EnableAllHooks();
 	}

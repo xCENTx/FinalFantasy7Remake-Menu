@@ -7,6 +7,8 @@ namespace DX11Base
 {
     using namespace FF7Remake;
 
+    
+
 	namespace Styles 
     {
         void InitStyle()
@@ -77,6 +79,34 @@ namespace DX11Base
 
     namespace Widgets
     {
+        void WelcomeMessage()
+        {
+            static ImVec2 window_size;
+
+            ImGuiViewport* pViewport = ImGui::GetMainViewport();
+            if (!pViewport)
+                return;
+
+            ImVec2 client_rect = pViewport->WorkSize;
+            ImVec2 center = { client_rect.x * .5f - window_size.x * .5f, client_rect.y * .5f - window_size.y * .5f };
+            ImGui::SetNextWindowPos({ center });
+            if (!ImGui::Begin("FFVii Internal Launch Window", 0, 103))
+            {
+                ImGui::End();
+                return;
+            }
+
+            ImGui::TextCentered("FINAL FANTASY VII REMAKE INTERNAL MENU");
+            ImGui::Text("PRESS [INSERT] OR [L3 + R3] TO SHOW THE MENU");
+            ImGui::Separator();
+            ImGui::TextColored(ImColor(255, 0, 0, 255), "MENU v1.2 | Released: May 23, 2024");
+            ImGui::Text("https://github.com/xCENTx/FinalFantasy7Remake-Menu");  //  @TODO: copy to clipboard
+
+            window_size = ImGui::GetWindowSize();
+
+            ImGui::End();
+        }
+
         void StatsEditor(AGameState* pGameState, int index)
         {
             if (!pGameState)
@@ -210,23 +240,42 @@ namespace DX11Base
                     pGameState->SetPlayerAttributes(index, attributes);
             }
         }
-    }
 
-    namespace Stats 
-    {
-        void Stats()
+        void TargetInfo()
         {
-            AGameState* pGameState = AGame::gGameBase->GetGameState();
-            if (!pGameState)
+            static ImVec2 window_size;
+           
+            ImGuiViewport* pViewport = ImGui::GetMainViewport();
+            if (!pViewport || !AGame::sTargetEntity.bValid)
                 return;
 
-            static int selected_index{ 0 };
-            static const char* stats_party[]{ "CLOUD", "PARTY SLOT 2", "PARTY SLOT 3", "PARTY SLOT 4", "PARTY SLOT 5" };
-            ImGui::Combo("PARTY MEMBER", &selected_index, stats_party, IM_ARRAYSIZE(stats_party));
-            ImGui::Separator();
+            ImVec2 client_rect = pViewport->WorkSize;
+            ImVec2 top_center = { ( client_rect.x * .5f ) - window_size.x * .5f , 0.0f };
+            ImGui::SetNextWindowPos(top_center);
+            
+            //  if (window_size)
+            //  ImGui::SetNextWindowSize(window_size);  //  first pass will be empty
+            if (!ImGui::Begin("Target Info", 0, 96 | ImGuiWindowFlags_NoTitleBar) || !AGame::sTargetEntity.bValid)
+            {
+                window_size = { 0.f, 0.f };
+                ImGui::End();
+                return;
+            }
+            GUI::TextCenteredf("Level: %d", AGame::sTargetEntity.Level);
+            GUI::TextCenteredf("HP: %d / %d", AGame::sTargetEntity.HP, AGame::sTargetEntity.HPMax);
+            GUI::TextCenteredf("STAGGER: %.1f / %.1f", AGame::sTargetEntity.Stagger, AGame::sTargetEntity.StaggerMax);
+            GUI::TextCenteredf("SPECIAL ATTACK: %.1f / %.1f", AGame::sTargetEntity.SpAtkTime, AGame::sTargetEntity.SpAtkTimeMax);
+            GUI::TextCenteredf("ATTACK: %d", AGame::sTargetEntity.Attack);
+            GUI::TextCenteredf("MAGIC ATTACK: %d", AGame::sTargetEntity.MagicAtk);
+            GUI::TextCenteredf("DEFENSE: %d", AGame::sTargetEntity.Defense);
+            GUI::TextCenteredf("MAGIC DEFENSE: %d", AGame::sTargetEntity.MagicDefense);
+            //  ImGui::ProgressBar((float)(AGame::sTargetEntity.HP * AGame::sTargetEntity.HPMax), { (float)AGame::sTargetEntity.HP , (float)AGame::sTargetEntity.HPMax});
 
-            int index = (selected_index - 1);
-            Widgets::StatsEditor(pGameState, index);
+
+
+            window_size = ImGui::GetWindowSize();
+
+            ImGui::End();
         }
     }
 
@@ -234,6 +283,43 @@ namespace DX11Base
     {
         void TABplayer()
         {
+            // Select Character
+            static const char* selectables_names[]{ "CLOUD", "BARRET", "TIFA", "AERITH", "RED Xiii", "ALL", "RESET" };
+            if (ImGui::BeginTable("SELECTION", 7, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Borders))
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    const char* name_entry = selectables_names[i];
+                    ImGui::TableNextColumn();
+                    if (ImGui::Selectable(name_entry, &AGame::bSelectedPlayer[i]))
+                    {
+                        AGame::iSelectedPlayerIndex = i;
+
+                        if (i == 5 || i == 6)
+                        {
+                            bool res = AGame::bSelectedPlayer[i];
+                            switch (i)
+                            {
+                            case 5:
+                                for (int i = 0; i < 6; i++)
+                                    AGame::bSelectedPlayer[i] = res;
+                                break;
+
+                            case 6:
+                                for (int i = 0; i < 7; i++)
+                                    AGame::bSelectedPlayer[i] = false;
+                                AGame::bSelectedPlayer[0] = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                ImGui::EndTable();
+            }
+
+
+            //  ImGui::RadioButton
             ImGui::Toggle("DEMI GOD", &AGame::bDemiGod);
             ImGui::Toggle("DEMI MANA", &AGame::bDemiGodMagic);
             ImGui::Toggle("MAX LIMIT", &AGame::bMaxLimit);
@@ -246,7 +332,24 @@ namespace DX11Base
             if (ImGui::Toggle("MODIFY TIME SCALE", &AGame::bModTimeScale) && !AGame::bModTimeScale)
                 AGame::fTimeScalar = 1.0f;
             if (AGame::bModTimeScale)
+            {
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 5.0f);
+                if(ImGui::Button("x2"))
+                    AGame::fTimeScalar = 2.0f;
+                ImGui::SameLine();
+                if (ImGui::Button("x3"))
+                    AGame::fTimeScalar = 3.0f;
+                ImGui::SameLine();
+                if (ImGui::Button("x5"))
+                    AGame::fTimeScalar = 5.0f;
+                ImGui::SameLine();
+                if (ImGui::Button("x10"))
+                    AGame::fTimeScalar = 10.0f;
+
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
                 ImGui::SliderFloat("##TIME SCALE", &AGame::fTimeScalar, 0.0f, 1.0f, "%.2f");
+            }
         }
 
         void TABitems()
@@ -268,12 +371,16 @@ namespace DX11Base
                         continue;
 
                     ImGui::PushID(i);
-
-                    if (ImGui::CollapsingHeader(std::to_string(i).c_str()))
+                    std::string nameEntry = "[" + std::to_string(i) + "] " + item.GetName(i);
+                    if (!ImGui::CollapsingHeader(nameEntry.c_str()))
                     {
-                        ImGui::Text("ID: 0x%8X", (int*)&item.ID, 1, 0);
-                        ImGui::InputInt("COUNT", (int*)&item.Count, 1, 0);
+                        ImGui::PopID();
+                        continue;
                     }
+                    
+                    //  ImGui::Text("ID: 0x%8X", item.ID, 1, 0);
+                    if (ImGui::InputInt("COUNT", &item.Count, 1, 0))
+                        _itemsList[i].Count = item.Count;
 
                     ImGui::PopID();
                 }
@@ -298,14 +405,25 @@ namespace DX11Base
 
                     ImGui::PushID(i);
 
-                    if (ImGui::CollapsingHeader(std::to_string(materia.Index).c_str()))
+                    std::string nameEntry = "[" + std::to_string(materia.Level) + "] " + materia.GetName();
+                    if (!ImGui::CollapsingHeader(nameEntry.c_str()))
                     {
-                        ImGui::Text("ID: 0x%8X", materia.MateriaID, 1, 0);
-                        ImGui::Text("NAME ID: %d", materia.NameID, 1, 0);
-                        ImGui::InputInt("LEVEL", (int*)&materia.Level, 1, 0);
-                        ImGui::InputInt("XP", &materia.TotalXP, 1, 0);
-                    
+                        ImGui::PopID();
+                        continue;
                     }
+
+                    //  ImGui::Text("ID: 0x%8X", materia.MateriaID, 1, 0);
+                    ImGui::Text("NAME ID: %d", materia.NameID, 1, 0);
+
+                    int level = materia.Level;
+                    if (ImGui::InputInt("LEVEL", &level, 1, 0))
+                        _materiaList[i].Level = (__int8)level;
+                        
+                    if (ImGui::InputInt("XP", &materia.TotalXP, 1, 0))
+                        _materiaList[i].TotalXP = materia.TotalXP;
+
+                    ImGui::Separator();
+                    
 
                     ImGui::PopID();
                 }
@@ -315,13 +433,23 @@ namespace DX11Base
 
         void TABstats()
         {
-            Stats::Stats();
+            AGameState* pGameState = AGame::gGameBase->GetGameState();
+            if (!pGameState)
+                return;
+
+            static int selected_index{ 0 };
+            static const char* party_names[]{ "CLOUD", "BARRET", "TIFA", "AERITH", "RED Xiii" };
+            ImGui::Combo("PARTY MEMBER", &selected_index, party_names, IM_ARRAYSIZE(party_names));
+            ImGui::Separator();
+
+            int index = (selected_index - 1);
+            Widgets::StatsEditor(pGameState, index);
         }
 
         void TABenemies()
         {
 
-            ImGui::Toggle("STUPIFY", &AGame::bNoTargetAttack);
+            //  ImGui::Toggle("STUPIFY", &AGame::bNoTargetAttack);
             ImGui::Toggle("NO DAMAGE", &AGame::bNullTargetDmg);
             ImGui::Toggle("AUTO STAGGER", &AGame::bTargetAlwaysStagger);
             ImGui::Toggle("1 HIT KILLS", &AGame::bKillTarget);
@@ -372,15 +500,23 @@ namespace DX11Base
 			ImGui::ShowDemoWindow();
 	}
 
+
+    static ImVec2 gui_pos{0, 0};
+    static ImVec2 gui_size{0, 0};
     void Menu::MainMenu()
     {
+
         if (!ImGui::Begin("Final Fantasy 7 Remake", &g_Engine->m_ShowMenu, 96 | ImGuiWindowFlags_NoTitleBar))
         {
             ImGui::End();
             return;
         }
 
-
+        //  shrouded background
+        auto draw = ImGui::GetWindowDrawList();
+        draw->AddRectFilled(gui_pos, { gui_pos.x + gui_size.x, gui_pos.y + gui_size.y }, ImColor(0.0f, 0.0f, 0.0f, .5f), 0.f);
+        
+        
         if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None))
         {
             if (ImGui::BeginTabItem("PLAYER"))
@@ -422,39 +558,63 @@ namespace DX11Base
             ImGui::EndTabBar();
         }
 
+
+        gui_pos = ImGui::GetWindowPos();
+        gui_size = ImGui::GetWindowSize();
         ImGui::End();
 	}
 
 	void Menu::HUD()
 	{
-        ImGui::SetNextWindowPos(ImVec2(10, 10));
-        if (!ImGui::Begin("FFVii Internal Launch Window", 0, 103))
-        {
-            ImGui::End();
-            return;
-        }
-        
-        ImGui::Text("FINAL FANTASY VII INTERNAL MENU LOADED");
-        ImGui::Text("PRESS [INSERT] OR [L3 + R3] TO SHOW THE MENU");
-        ImGui::Separator();
-        ImGui::TextColored(ImColor(255, 0, 0, 255), "MENU v1.2 | Released: May 23, 2024");
+        //  Welcome Message
+        if (g_Engine->m_ShowWelcome)
+            Widgets::WelcomeMessage();
 
-        ImGui::End();
+
+        //  Target Info
+        // @TODO: ImGui annoying navigation menu needs to be removed
+        //  Widgets::TargetInfo();
 	}
 
 	void Menu::Loops()
 	{
         if (AGame::bDemiGod)
-            AGame::Patches::RefillCloudHP();
+        {
+            switch (AGame::iSelectedPlayerIndex)
+            {
+                case 6: AGame::Patches::RefillPartyHP(); break;
+                default: AGame::Patches::RefillPlayerHP(AGame::iSelectedPlayerIndex); break;
+            }
+
+        }
 
         if (AGame::bDemiGodMagic)
-            AGame::Patches::RefillCloudMP();
-
-        if (AGame::bMaxLimit)
-            AGame::Patches::CloudMaxLimit();
+        {
+            switch (AGame::iSelectedPlayerIndex)
+            {
+                case 6: AGame::Patches::RefillPartyMP(); break;
+                default: AGame::Patches::RefillPlayerMP(AGame::iSelectedPlayerIndex); break;
+            }
+        }
 
         if (AGame::bMaxATB)
-            AGame::Patches::CloudMaxATB();
+        {
+
+            switch (AGame::iSelectedPlayerIndex)
+            {
+                case 6: AGame::Patches::PartyMaxATB(); break;
+                default: AGame::Patches::PlayerMaxATB(AGame::iSelectedPlayerIndex); break;
+            }
+        }
+
+        if (AGame::bMaxLimit)
+        {
+            switch (AGame::iSelectedPlayerIndex)
+            {
+                case 6: AGame::Patches::PartyMaxLimit(); break;
+                default: AGame::Patches::PlayerMaxLimit(AGame::iSelectedPlayerIndex); break;
+            }
+        }
 	}
 
     //----------------------------------------------------------------------------------------------------
@@ -463,23 +623,19 @@ namespace DX11Base
 
     void GUI::TextCentered(const char* pText)
     {
-        ImVec2 textSize = ImGui::CalcTextSize(pText);
-        ImVec2 windowSize = ImGui::GetWindowSize();
-        ImVec2 textPos = ImVec2((windowSize.x - textSize.x) * 0.5f, (windowSize.y - textSize.y) * 0.5f);
-        ImGui::SetCursorPos(textPos);
-        ImGui::Text("%s", pText);
+        ImGui::TextCentered(pText);
     }
 
     //  @ATTN: max buffer is 256chars
     void GUI::TextCenteredf(const char* pText, ...)
     {
+        ImGuiContext& g = *GImGui;
+
         va_list args;
         va_start(args, pText);
-        char buffer[256];
-        vsnprintf(buffer, sizeof(buffer), pText, args);
+        const char* text_end = g.TempBuffer + ImFormatStringV(g.TempBuffer, IM_ARRAYSIZE(g.TempBuffer), pText, args);
+        TextCentered(g.TempBuffer);
         va_end(args);
-
-        TextCentered(buffer);
     }
 
     void GUI::DrawText_(ImVec2 pos, ImColor color, const char* pText, float fontSize)

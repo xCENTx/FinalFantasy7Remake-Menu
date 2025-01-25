@@ -7,6 +7,8 @@ namespace FF7Remake
 
 	//	STATICS
 	AGameBase*										AGame::gGameBase{ nullptr };
+	int												AGame::iSelectedPlayerIndex{ false };
+	bool											AGame::bSelectedPlayer[7]{ false };
 	bool											AGame::bDemiGod{ false };
 	bool											AGame::bDemiGodMagic{ false };
 	bool											AGame::bMaxLimit{ false };
@@ -24,6 +26,7 @@ namespace FF7Remake
 	bool											AGame::bNullTargetDmg{ false };			//	target takes no damage
 	bool											AGame::bTargetAlwaysStagger{ false };	//	target defense is set to 0
 	bool											AGame::bXpFarm{ false };				//	sets targets hp to 0, prevents targets from attacking , sets target stagger to max and sets target to max level for max reward
+	STargetInfo										AGame::sTargetEntity{};					//	structure contains last most recent target entity information obtained in ATargetEntity_GetHP_hook
 	__int64											AGame::Hooks::pXInput_State{ 0 };
 	__int64											AGame::Hooks::pAScene_Update{ 0 };
 	__int64											AGame::Hooks::pAPlayerState_SetHealth{ 0 };
@@ -48,6 +51,7 @@ namespace FF7Remake
 	{
 
 		gGameBase									= reinterpret_cast<AGameBase*>(g_Engine->g_GameBaseAddr + Offsets::oGameBase);
+		bSelectedPlayer[0]							= true;
 		Hooks::pXInput_State						= (g_Engine->g_GameBaseAddr + FunctionOffsets::fnXinputState);
 		Hooks::pAScene_Update						= (g_Engine->g_GameBaseAddr + FunctionOffsets::fnSceneUpdate);
 		Hooks::pAPlayerState_SetHealth				= (g_Engine->g_GameBaseAddr + FunctionOffsets::fnSetHealth);
@@ -180,7 +184,7 @@ namespace FF7Remake
 		if (!pGameState)
 			return;
 
-		for (int i = 0; i < 2; i++)
+		for (int i = 0; i < 6; i++)
 		{
 			APlayerStats player_stats = pGameState->GetPlayerStats(i);
 			player_stats.RefillHP();
@@ -197,7 +201,7 @@ namespace FF7Remake
 		if (!pGameState)
 			return;
 
-		for (int i = 0; i < 2; i++)
+		for (int i = 0; i < 6; i++)
 		{
 			APlayerStats player_stats = pGameState->GetPlayerStats(i);
 			player_stats.RefillMana();
@@ -214,7 +218,7 @@ namespace FF7Remake
 		if (!pGameState)
 			return;
 		
-		for (int i = 0; i < 2; i++)
+		for (int i = 0; i < 6; i++)
 		{
 			APlayerStats player_stats = pGameState->GetPlayerStats(i);
 			player_stats.SetMaxLimit();
@@ -231,7 +235,7 @@ namespace FF7Remake
 		if (!pGameState)
 			return;
 
-		for (int i = 0; i < 2; i++)
+		for (int i = 0; i < 6; i++)
 		{
 			APlayerStats player_stats = pGameState->GetPlayerStats(i);
 			player_stats.SetMaxATB();
@@ -240,6 +244,74 @@ namespace FF7Remake
 		}
 
 		CloudMaxATB();
+	}
+
+	void AGame::Patches::RefillPlayerHP(int index)
+	{
+		AGameState* pGameState = gGameBase->GetGameState();
+		if (!pGameState)
+			return;
+
+		if (index == 0)
+		{
+			RefillCloudHP();
+			return;
+		}
+
+		APlayerStats player_stats = pGameState->GetPlayerStats(index);
+		player_stats.RefillHP();
+		pGameState->SetPlayerStats(index, player_stats);
+	}
+
+	void AGame::Patches::RefillPlayerMP(int index)
+	{
+		AGameState* pGameState = gGameBase->GetGameState();
+		if (!pGameState)
+			return;
+
+		if (index == 0)
+		{
+			RefillCloudMP();
+			return;
+		}
+		
+		APlayerStats player_stats = pGameState->GetPlayerStats(index);
+		player_stats.RefillMana();
+		pGameState->SetPlayerStats(index, player_stats);
+	}
+
+	void AGame::Patches::PlayerMaxLimit(int index)
+	{
+		AGameState* pGameState = gGameBase->GetGameState();
+		if (!pGameState)
+			return;
+
+		if (index == 0)
+		{
+			CloudMaxLimit();
+			return;
+		}
+
+		APlayerStats player_stats = pGameState->GetPlayerStats(index);
+		player_stats.SetMaxLimit();
+		pGameState->SetPlayerStats(index, player_stats);
+	}
+
+	void AGame::Patches::PlayerMaxATB(int index)
+	{
+		AGameState* pGameState = gGameBase->GetGameState();
+		if (!pGameState)
+			return;
+
+		if (index == 0)
+		{
+			CloudMaxATB();
+			return;
+		}
+
+		APlayerStats player_stats = pGameState->GetPlayerStats(index);
+		player_stats.SetMaxATB();
+		pGameState->SetPlayerStats(index, player_stats);
 	}
 
 #pragma endregion
@@ -700,69 +772,83 @@ namespace FF7Remake
 	{
 		static bool bEditing{ false };	//	used so can call this function [ pTarget->GetHP() ] // recursion safety
 		auto pTarget = reinterpret_cast<ATarget*>(p);
-		if (!bEditing && pTarget && pTarget->IsValid())
+		if (!bEditing && pTarget)
 		{
 			bEditing = true;
+			bool bValid = pTarget->IsValid();
 
-			//	target level is adjusted
-			if (AGame::bModTargetLevel)
-				pTarget->SetLevel(iLevelScalar);
-
-			//	target health is restored ( note: target can still die if damage taken is > maxhp )
-			if (AGame::bNullTargetDmg)
-				pTarget->SetHP(pTarget->GetHPMax());
-
-			//	target wont attack player
-			if (AGame::bNoTargetAttack)
+			if (bValid)
 			{
-				//	Attack Rate
-				pTarget->SetAttackRate(0.0f);
-				
-				//	Special Attack Timer
-				pTarget->SetSpAtkTime(0.0f);
-				
-				//	Special Attack Threshold
-				pTarget->SetSpAtkTimeMax(0.0f);
+
+				//	target level is adjusted
+				if (AGame::bModTargetLevel)
+					pTarget->SetLevel(iLevelScalar);
+
+				//	target health is restored ( note: target can still die if damage taken is > maxhp )
+				if (AGame::bNullTargetDmg)
+					pTarget->SetHP(pTarget->GetHPMax());
+
+				//	target wont attack player
+				if (AGame::bNoTargetAttack)
+				{
+					//	Attack Rate
+					pTarget->SetAttackRate(0.0f);
+
+					//	Special Attack Timer
+					pTarget->SetSpAtkTime(0.0f);
+
+					//	Special Attack Threshold
+					pTarget->SetSpAtkTimeMax(0.0f);
+				}
+
+				//	prevents targets from attacking , sets max level and sets defenses to 0
+				//	- apply Auto Kill || Auto Stagger for increased effects
+				if (AGame::bXpFarm)
+				{
+					//	Set Level for rewards
+					pTarget->SetLevel(9999);
+
+					//	prevent targets from attacking party
+					pTarget->SetAttackRate(0.0f);
+
+					//	prevent targets from using special attacks
+					pTarget->SetSpAtkTimeMax(0.0f);
+
+					//	set target defense to 0 for critical hits
+					pTarget->SetDefense(0);
+
+					//	set target magic defense to 0 for critical magic hits
+					pTarget->SetMagicDef(0);
+				}
+
+				//	target is killed
+				if (AGame::bKillTarget)
+					pTarget->SetHP(0);
+
+				AGame::sTargetEntity = STargetInfo(pTarget);
+				if (!AGame::sTargetEntity.Update())
+					AGame::sTargetEntity.ClearTarget();
+
 			}
-
-			//	prevents targets from attacking , sets max level and sets defenses to 0
-			//	- apply Auto Kill || Auto Stagger for increased effects
-			if (AGame::bXpFarm)
-			{
-				//	Set Level for rewards
-				pTarget->SetLevel(9999);
-
-				//	prevent targets from attacking party
-				pTarget->SetAttackRate(0.0f);
-
-				//	prevent targets from using special attacks
-				pTarget->SetSpAtkTimeMax(0.0f);
-
-				//	set target defense to 0 for critical hits
-				pTarget->SetDefense(0);
-
-				//	set target magic defense to 0 for critical magic hits
-				pTarget->SetMagicDef(0);
-			}
-
-			//	target is killed
-			if (AGame::bKillTarget)
-				pTarget->SetHP(0);
+			else if (AGame::sTargetEntity.bValid && AGame::sTargetEntity.IsCurrentTarget(pTarget))
+				AGame::sTargetEntity.ClearTarget();
 
 			bEditing = false;
 		}
+
 		return ATargetEntity_GetHP_stub(p);
 	}
 
 	//	
 	__int64 AGame::Hooks::ATargetEntity_GetStaggerAmount_hook(__int64 a1)
 	{
-		if (AGame::bTargetAlwaysStagger)
-		{
-			auto pEnt = reinterpret_cast<ATargetStagger*>(a1);
-			if (pEnt)
+		auto pEnt = reinterpret_cast<ATargetStagger*>(a1);
+
+		if (pEnt && AGame::sTargetEntity.bValid)
+			AGame::sTargetEntity.StaggerUpdate(pEnt);
+
+		if (pEnt && AGame::bTargetAlwaysStagger)
 				pEnt->Stagger = pEnt->StaggerMax;
-		}
 
 		return ATargetEntity_GetStaggerAmount_stub(a1);
 	}
@@ -840,6 +926,52 @@ namespace FF7Remake
 		return result;
 	}
 
+	std::string AItem::GetName(int index)
+	{
+		std::string result;
+
+		switch (index)
+		{
+			case 1: result = "Potion"; break;
+			case 2: result = "Ether"; break;
+			//	case : result = "Gil"; break;
+			//	case : result = "Grenade"; break;
+			//	case : result = "Moogle Medal"; break;
+			//	case : result = "Phoenix Down"; break;
+			//	case : result = "Hi-Potion"; break;
+			//	case : result = "Yellow Flower"; break;
+			//	case : result = "Adrenaline"; break;
+			//	case : result = "Sedative"; break;
+			//	case : result = "Combat Analyzer"; break;
+			//	case : result = "Maiden's Kiss"; break;
+			//	case : result = "Antidote"; break;
+			//	case : result = "Elixir"; break;
+			//	case : result = "Watch Security Key"; break;
+			//	case : result = "Shinra ID Card"; break;
+			//	case : result = "Orb of Gravity"; break;
+			//	case : result = "Hazardous Material"; break;
+			//	case : result = "Remedy"; break;
+			//	case : result = "Grappling Gun"; break;
+			//	case : result = "Echo Mist"; break;
+			//	case : result = "Sector 5 Reactor Key Card"; break;
+			//	case : result = "Big Bomber"; break;
+			//	case : result = "Mega Potion"; break;
+			//	case : result = "Smelling Salts"; break;
+			//	case : result = "Celeris"; break;
+			//	case : result = "Handmade Necklace"; break;
+			//	case : result = "Moogle Membership Card"; break;
+			//	case : result = "Graveyard Key"; break;
+			//	case : result = "Guardian Angel's Calling Cards"; break;
+			//	case : result = "Sam's Coin"; break;
+			//	case : result = "Tournament Entry Form"; break;
+			//	case : result = "Fuzzy Wuzzy"; break;
+			//	case : result = "Mr. Cuddlesworth"; break;
+			//	case : result = "Sam's Requests"; break;
+		default: result = "unknown"; break;
+		}
+		return result;
+	}
+
 #pragma endregion
 
 	//----------------------------------------------------------------------------------------------------
@@ -857,6 +989,19 @@ namespace FF7Remake
 
 		switch (NameID)
 		{
+		case EMateria_Healing: result = "Healing"; break;
+		case EMateria_Cleansing: result = "Cleansing"; break;
+		case EMateria_Revival: result = "Revival"; break;
+		case EMateria_Fire: result = "Fire"; break;
+		case EMateria_Ice: result = "Ice"; break;
+		case EMateria_Lightning: result = "Lightning"; break;
+		case EMateria_Barrier: result = "Barrier"; break;
+		case EMateria_Elemental: result = "Elemental"; break;
+		case EMateria_Assess: result = "Assess"; break;
+		case EMateria_Chakra: result = "Chakra"; break;
+		case EMateria_Prayer: result = "Prayer"; break;
+		case EMateria_DeadlyDodge: result = "Deadly Dodge"; break;
+		case EMateria_AutoCure: result = "Auto Cure"; break;
 		default: result = "unknown"; break;
 		}
 
@@ -1081,5 +1226,67 @@ namespace FF7Remake
 	}
 
 #pragma endregion
+
+	//----------------------------------------------------------------------------------------------------
+	//										STARGETINFO
+	//-----------------------------------------------------------------------------------
+#pragma region	//	STARGETINFO
+
+	STargetInfo::STargetInfo() {}
+
+	STargetInfo::STargetInfo(ATarget* p)
+	{
+		if (!p)
+			return;
+
+		pTarget = p;
+		Level = pTarget->Level;
+		SpAtkTime = pTarget->SpAtkTime;
+		SpAtkTimeMax = pTarget->SpAtkTimeMax;
+		AttackRate = pTarget->AttackRate;
+		HP = pTarget->HP;
+		HPMax = pTarget->HPMax;
+		Attack = pTarget->Attack;
+		MagicAtk = pTarget->MagicAtk;
+		Defense = pTarget->Defense;
+		MagicDefense = pTarget->MagicDefense;
+		
+		bValid = HP > 0;
+	}
+
+	void STargetInfo::ClearTarget() { memset(this, 0, sizeof(STargetInfo)); }
+
+	bool STargetInfo::IsCurrentTarget(class ATarget* pCmp) { return pCmp == pTarget; }
+
+	bool STargetInfo::Update()
+	{
+		bool result{ false };
+
+		if (!bValid || !pTarget)
+		{
+			bValid = result;
+			return result;
+		}
+
+		if (pTarget->HP <= 0)
+		{
+			bValid = result;
+			return result;
+		}
+
+		return true;
+	}
+
+	void STargetInfo::StaggerUpdate(class ATargetStagger* sInfo)
+	{
+		Stagger = sInfo->Stagger;
+		StaggerMax = sInfo->StaggerMax;
+	}
+
+
+#pragma endregion
+
+
+
 
 }

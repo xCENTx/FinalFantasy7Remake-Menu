@@ -39,7 +39,7 @@ int main()
 
 	//	set window focus
 	SetForegroundWindow(proc.window);
-	SetActiveWindow(proc.window);
+	//	SetActiveWindow(proc.window);
 	printf("[+] set target as active window\n");
 
 	//	inject 
