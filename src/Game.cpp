@@ -1286,7 +1286,4 @@ namespace FF7Remake
 
 #pragma endregion
 
-
-
-
 }

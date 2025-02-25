@@ -17,17 +17,12 @@ namespace FF7Remake
 	*	T<StructName>	: all game engine template class and struct names should be prefixed with T to signify that it is both a templated and game related data structure.
 	*	S<StructName>	: all custom methods acting as wrappers to join game info should be prefixed with S to signify that it acts as an extention to the game
 	*	C<ClassName>	: Similiar to S<StructName> all classes which are helper / wrapper methods for the game shall be prefixed with C to signifay that it acts as an extension to the game.
-	
-	//	techniques
-	*	ternary			: keep it basic and readable.
-	*	recursion		: would batman ?
-	*	
 
 	*/
 	
 	namespace Offsets
 	{
-		constexpr auto						oGameBase{ 0x57B9260 };					//	48 8B 05 ? ? ? ? 4C 89 B4 24 ? ? ? ? 44 0F B6 76
+		constexpr auto						oGameBase{ 0x57CA5E8 };					//	48 8B 05 ? ? ? ? 4C 89 B4 24 ? ? ? ? 44 0F B6 76
 		constexpr auto						oGameBase_CloudState{ 0x880 };			//	Analyze APlayerState_SetHealth_hook
 		constexpr auto						oGameBase_ItemsList{ 0x35640 };			//	Analyze APlayerState_SubItem_hook
 		constexpr auto						oGameBase_MateriaList{ 0x20A8 };		//	
@@ -35,18 +30,20 @@ namespace FF7Remake
 
 	namespace FunctionOffsets
 	{
-		constexpr auto						fnXinputState{ 0x1D1F920 };				//	XInput_State_hook
-		constexpr auto						fnSceneUpdate{ 0x16B44A0 };				//	AScene_Update_hook
-		constexpr auto						fnSetHealth{ 0x0AFB6C0 };				//	APlayerState_SetHealth_hook
-		constexpr auto						fnSetMana{ 0x0AFB8D0 };					//	APlayerState_SetMana_hook
-		constexpr auto						fnSubItem{ 0x0B1CAF0 };					//	APlayerState_SubItem_hook
-		constexpr auto						fnTargetGetHP{ 0x08884C0 };				//	ATargetEntity_GetHP_hook
-		constexpr auto						fnTargetGetStaggerAmount{ 0x0890620 };	//	ATargetEntity_GetStaggerAmount_hook		
+		constexpr auto						fnXinputState{ 0x1D253A0 };				//	XInput_State_hook	; FF 15 ? ? ? ? 85 C0 0F 94 C1 - 0x8E	; __int64 __fastcall x__XInput_UpdateState(__int64)
+		constexpr auto						fnSceneUpdate{ 0x16B9510 };				//	AScene_Update_hook	;	E8 ? ? ? ? 48 8B 0D ? ? ? ? 48 8B 89 ? ? ? ? 48 83 C4	; __int64 __fastcall x__AScene_Update(__int64)
+		constexpr auto						fnSetHealth{ 0x0AFDF80 };				//	APlayerState_SetHealth_hook	;	E8 ? ? ? ? 0F B6 CB E8 ? ? ? ? 8B D0	; __int64 __fastcall x__APlayerState_SubHealth(unsigned __int8, int)
+		constexpr auto						fnSetMana{ 0x0AFE190 };					//	APlayerState_SetMana_hook	;	E8 ? ? ? ? 48 83 C6 ? 48 3B F5 0F 85 ? ? ? ? 4C 8B 74 24 ? 48 8B 7C 24 ? 48 8B 5C 24 ? 48 83 C4	; __int64 __fastcall x__APlayerState_SetMana(unsigned __int8, int)
+		constexpr auto						fnSubItem{ 0x0B1F410 };					//	APlayerState_SubItem_hook	;	E8 ? ? ? ? B0 ? EB ? CC CC CC CC CC CC CC 48 89 5C 24 ? 57	; __int64 __fastcall x__APlayerState_SubItem(__int64, int)
+		constexpr auto						fnTargetGetHP{ 0x0889710 };				//	ATargetEntity_GetHP_hook	;	E8 ? ? ? ? 8B C8 88 45 ? C1 F9 ? 48 8D 55 ? 88 4D ? 41 B8 ? ? ? ? 8B C8 C1 F8 ? C1 F9 ? 88 45 ? 48 8B 07 88 4D ? 48 8B CF FF 50 ? 48 8B 5C 24	; __int64 __fastcall x__ATargetEntity_GetHP(__int64)
+		constexpr auto						fnTargetGetStaggerAmount{ 0x0891870 };	//	ATargetEntity_GetStaggerAmount_hook	;	48 8B 05 ? ? ? ? 48 39 41 ? 0F 94 C0 + 0x16	; float __fastcall x__ATargetEntity_GetStaggerAmount(__int64)
+		constexpr auto                      fnGetHighlitedEquipment{ 0x0AFF020 };	//	GetHighlitedEquipment_hook	;	E8 ? ? ? ? 8B 85 ? ? ? ? 44 8B 8D ? ? ? ? 44 8B 85	; __int64 __fastcall _GetHighlitedEquipment(_QWORD *, __int64)
+		constexpr auto						vfGetEquipmentByID{ 0x1996E80 };		//	vfGetEquipmentByID_hook	; __int64 __fastcall _vfGetEquipmentByID(__int64 a1, __int64 eqID)
 	}
 
 	namespace VtableOffsets
 	{
-		constexpr auto						vfTargetEntity{ 0x4B3E5E8 };			//  Analyze ATargetEntity_GetHP_hook
+		constexpr auto						vfTargetEntity{ 0x4B4E128 };			//  Analyze ATargetEntity_GetHP_hook	;	48 8D 0D ? ? ? ? 48 89 78 ? 48 89 08 48 89 78	
 	}
 
 	
