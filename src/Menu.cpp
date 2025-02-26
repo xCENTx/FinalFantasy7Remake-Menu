@@ -7,6 +7,8 @@ namespace DX11Base
 {
     using namespace FF7Remake;
 
+    
+
 	namespace Styles 
     {
         void InitStyle()
@@ -77,6 +79,34 @@ namespace DX11Base
 
     namespace Widgets
     {
+        void WelcomeMessage()
+        {
+            static ImVec2 window_size;
+
+            ImGuiViewport* pViewport = ImGui::GetMainViewport();
+            if (!pViewport)
+                return;
+
+            ImVec2 client_rect = pViewport->WorkSize;
+            ImVec2 center = { client_rect.x * .5f - window_size.x * .5f, client_rect.y * .5f - window_size.y * .5f };
+            ImGui::SetNextWindowPos({ center });
+            if (!ImGui::Begin("FFVii Internal Launch Window", 0, 103))
+            {
+                ImGui::End();
+                return;
+            }
+
+            GUI::TextCentered("FINAL FANTASY VII REMAKE INTERNAL MENU");
+            ImGui::Text("PRESS [INSERT] OR [L3 + R3] TO SHOW THE MENU");
+            ImGui::Separator();
+            ImGui::TextColored(ImColor(255, 0, 0, 255), "MENU v1.2 | Released: May 23, 2024");
+            ImGui::Text("https://github.com/xCENTx/FinalFantasy7Remake-Menu");  //  @TODO: copy to clipboard
+
+            window_size = ImGui::GetWindowSize();
+
+            ImGui::End();
+        }
+
         void StatsEditor(AGameState* pGameState, int index)
         {
             if (!pGameState)
@@ -97,7 +127,7 @@ namespace DX11Base
                 attributes = pGameState->GetPlayerAttributes(index + 1);
             }
 
-            ImGui::TextCentered("PLAYER STATS");
+            GUI::TextCentered("PLAYER STATS");
             ImGui::Spacing();
 
             if (ImGui::InputInt("##HP1", &stats.HP))
@@ -210,23 +240,42 @@ namespace DX11Base
                     pGameState->SetPlayerAttributes(index, attributes);
             }
         }
-    }
 
-    namespace Stats 
-    {
-        void Stats()
+        void TargetInfo()
         {
-            AGameState* pGameState = AGame::gGameBase->GetGameState();
-            if (!pGameState)
+            static ImVec2 window_size;
+           
+            ImGuiViewport* pViewport = ImGui::GetMainViewport();
+            if (!pViewport || !AGame::sTargetEntity.bValid)
                 return;
 
-            static int selected_index{ 0 };
-            static const char* stats_party[]{ "CLOUD", "PARTY SLOT 2", "PARTY SLOT 3", "PARTY SLOT 4", "PARTY SLOT 5" };
-            ImGui::Combo("PARTY MEMBER", &selected_index, stats_party, IM_ARRAYSIZE(stats_party));
-            ImGui::Separator();
+            ImVec2 client_rect = pViewport->WorkSize;
+            ImVec2 top_center = { ( client_rect.x * .5f ) - window_size.x * .5f , 0.0f };
+            ImGui::SetNextWindowPos(top_center);
+            
+            //  if (window_size)
+            //  ImGui::SetNextWindowSize(window_size);  //  first pass will be empty
+            if (!ImGui::Begin("Target Info", 0, 96 | ImGuiWindowFlags_NoTitleBar) || !AGame::sTargetEntity.bValid)
+            {
+                window_size = { 0.f, 0.f };
+                ImGui::End();
+                return;
+            }
+            GUI::TextCenteredf("Level: %d", AGame::sTargetEntity.Level);
+            GUI::TextCenteredf("HP: %d / %d", AGame::sTargetEntity.HP, AGame::sTargetEntity.HPMax);
+            GUI::TextCenteredf("STAGGER: %.1f / %.1f", AGame::sTargetEntity.Stagger, AGame::sTargetEntity.StaggerMax);
+            GUI::TextCenteredf("SPECIAL ATTACK: %.1f / %.1f", AGame::sTargetEntity.SpAtkTime, AGame::sTargetEntity.SpAtkTimeMax);
+            GUI::TextCenteredf("ATTACK: %d", AGame::sTargetEntity.Attack);
+            GUI::TextCenteredf("MAGIC ATTACK: %d", AGame::sTargetEntity.MagicAtk);
+            GUI::TextCenteredf("DEFENSE: %d", AGame::sTargetEntity.Defense);
+            GUI::TextCenteredf("MAGIC DEFENSE: %d", AGame::sTargetEntity.MagicDefense);
+            //  ImGui::ProgressBar((float)(AGame::sTargetEntity.HP * AGame::sTargetEntity.HPMax), { (float)AGame::sTargetEntity.HP , (float)AGame::sTargetEntity.HPMax});
 
-            int index = (selected_index - 1);
-            Widgets::StatsEditor(pGameState, index);
+
+
+            window_size = ImGui::GetWindowSize();
+
+            ImGui::End();
         }
     }
 
@@ -234,19 +283,73 @@ namespace DX11Base
     {
         void TABplayer()
         {
-            ImGui::Toggle("DEMI GOD", &AGame::bDemiGod);
-            ImGui::Toggle("DEMI MANA", &AGame::bDemiGodMagic);
-            ImGui::Toggle("MAX LIMIT", &AGame::bMaxLimit);
-            ImGui::Toggle("MAX ATB", &AGame::bMaxATB);
-            ImGui::Toggle("NO HP LOSS", &AGame::bNullDmg);
-            ImGui::Toggle("NO MANA LOSS", &AGame::bNullMgk);
-            ImGui::Toggle("NO ITEM LOSS", &AGame::bNullItem);
-            ImGui::Toggle("XP MOD", &AGame::bXpFarm);
+            // Select Character
+            static const char* selectables_names[]{ "CLOUD", "BARRET", "TIFA", "AERITH", "RED Xiii", "ALL", "RESET" };
+            if (ImGui::BeginTable("SELECTION", 7, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings | ImGuiTableFlags_Borders))
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    const char* name_entry = selectables_names[i];
+                    ImGui::TableNextColumn();
+                    if (ImGui::Selectable(name_entry, &AGame::bSelectedPlayer[i]))
+                    {
+                        AGame::iSelectedPlayerIndex = i;
 
-            if (ImGui::Toggle("MODIFY TIME SCALE", &AGame::bModTimeScale) && !AGame::bModTimeScale)
+                        if (i == 5 || i == 6)
+                        {
+                            bool res = AGame::bSelectedPlayer[i];
+                            switch (i)
+                            {
+                            case 5:
+                                for (int i = 0; i < 6; i++)
+                                    AGame::bSelectedPlayer[i] = res;
+                                break;
+
+                            case 6:
+                                for (int i = 0; i < 7; i++)
+                                    AGame::bSelectedPlayer[i] = false;
+                                AGame::bSelectedPlayer[0] = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                ImGui::EndTable();
+            }
+
+
+            //  ImGui::RadioButton
+            GUI::Toggle("DEMI GOD", &AGame::bDemiGod);
+            GUI::Toggle("DEMI MANA", &AGame::bDemiGodMagic);
+            GUI::Toggle("MAX LIMIT", &AGame::bMaxLimit);
+            GUI::Toggle("MAX ATB", &AGame::bMaxATB);
+            GUI::Toggle("NO HP LOSS", &AGame::bNullDmg);
+            GUI::Toggle("NO MANA LOSS", &AGame::bNullMgk);
+            GUI::Toggle("NO ITEM LOSS", &AGame::bNullItem);
+            GUI::Toggle("XP MOD", &AGame::bXpFarm);
+
+            if (GUI::Toggle("MODIFY TIME SCALE", &AGame::bModTimeScale) && !AGame::bModTimeScale)
                 AGame::fTimeScalar = 1.0f;
             if (AGame::bModTimeScale)
+            {
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 5.0f);
+                if(ImGui::Button("x2"))
+                    AGame::fTimeScalar = 2.0f;
+                ImGui::SameLine();
+                if (ImGui::Button("x3"))
+                    AGame::fTimeScalar = 3.0f;
+                ImGui::SameLine();
+                if (ImGui::Button("x5"))
+                    AGame::fTimeScalar = 5.0f;
+                ImGui::SameLine();
+                if (ImGui::Button("x10"))
+                    AGame::fTimeScalar = 10.0f;
+
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
                 ImGui::SliderFloat("##TIME SCALE", &AGame::fTimeScalar, 0.0f, 1.0f, "%.2f");
+            }
         }
 
         void TABitems()
@@ -268,12 +371,16 @@ namespace DX11Base
                         continue;
 
                     ImGui::PushID(i);
-
-                    if (ImGui::CollapsingHeader(std::to_string(i).c_str()))
+                    std::string nameEntry = "[" + std::to_string(i) + "] " + item.GetName(i);
+                    if (!ImGui::CollapsingHeader(nameEntry.c_str()))
                     {
-                        ImGui::Text("ID: 0x%8X", (int*)&item.ID, 1, 0);
-                        ImGui::InputInt("COUNT", (int*)&item.Count, 1, 0);
+                        ImGui::PopID();
+                        continue;
                     }
+                    
+                    //  ImGui::Text("ID: 0x%8X", item.ID, 1, 0);
+                    if (ImGui::InputInt("COUNT", &item.Count, 1, 0))
+                        _itemsList[i].Count = item.Count;
 
                     ImGui::PopID();
                 }
@@ -298,14 +405,25 @@ namespace DX11Base
 
                     ImGui::PushID(i);
 
-                    if (ImGui::CollapsingHeader(std::to_string(materia.Index).c_str()))
+                    std::string nameEntry = "[" + std::to_string(materia.Level) + "] " + materia.GetName();
+                    if (!ImGui::CollapsingHeader(nameEntry.c_str()))
                     {
-                        ImGui::Text("ID: 0x%8X", materia.MateriaID, 1, 0);
-                        ImGui::Text("NAME ID: %d", materia.NameID, 1, 0);
-                        ImGui::InputInt("LEVEL", (int*)&materia.Level, 1, 0);
-                        ImGui::InputInt("XP", &materia.TotalXP, 1, 0);
-                    
+                        ImGui::PopID();
+                        continue;
                     }
+
+                    //  ImGui::Text("ID: 0x%8X", materia.MateriaID, 1, 0);
+                    ImGui::Text("NAME ID: %d", materia.NameID, 1, 0);
+
+                    int level = materia.Level;
+                    if (ImGui::InputInt("LEVEL", &level, 1, 0))
+                        _materiaList[i].Level = (__int8)level;
+                        
+                    if (ImGui::InputInt("XP", &materia.TotalXP, 1, 0))
+                        _materiaList[i].TotalXP = materia.TotalXP;
+
+                    ImGui::Separator();
+                    
 
                     ImGui::PopID();
                 }
@@ -315,17 +433,27 @@ namespace DX11Base
 
         void TABstats()
         {
-            Stats::Stats();
+            AGameState* pGameState = AGame::gGameBase->GetGameState();
+            if (!pGameState)
+                return;
+
+            static int selected_index{ 0 };
+            static const char* party_names[]{ "CLOUD", "BARRET", "TIFA", "AERITH", "RED Xiii" };
+            ImGui::Combo("PARTY MEMBER", &selected_index, party_names, IM_ARRAYSIZE(party_names));
+            ImGui::Separator();
+
+            int index = (selected_index - 1);
+            Widgets::StatsEditor(pGameState, index);
         }
 
         void TABenemies()
         {
 
-            ImGui::Toggle("STUPIFY", &AGame::bNoTargetAttack);
-            ImGui::Toggle("NO DAMAGE", &AGame::bNullTargetDmg);
-            ImGui::Toggle("AUTO STAGGER", &AGame::bTargetAlwaysStagger);
-            ImGui::Toggle("1 HIT KILLS", &AGame::bKillTarget);
-            ImGui::Toggle("MODIFY LEVEL", &AGame::bModTargetLevel);
+            //  GUI::Toggle("STUPIFY", &AGame::bNoTargetAttack);
+            GUI::Toggle("NO DAMAGE", &AGame::bNullTargetDmg);
+            GUI::Toggle("AUTO STAGGER", &AGame::bTargetAlwaysStagger);
+            GUI::Toggle("1 HIT KILLS", &AGame::bKillTarget);
+            GUI::Toggle("MODIFY LEVEL", &AGame::bModTargetLevel);
             if (AGame::bModTargetLevel)
                 ImGui::InputInt("LEVEL", &AGame::iLevelScalar);
 
@@ -345,7 +473,7 @@ namespace DX11Base
             ImGui::Separator();
             ImGui::Spacing();
 
-            if (ImGui::Button("UNHOOK DLL", ImVec2(ImGui::GetWindowContentRegionWidth() - 3, 20))) 
+            if (ImGui::Button("UNHOOK DLL", ImVec2(ImGui::GetContentRegionAvail().x - 3, 20))) 
             {
                 g_Engine->m_ShowMenu = false;
                 g_bKillswitch = true;
@@ -372,15 +500,23 @@ namespace DX11Base
 			ImGui::ShowDemoWindow();
 	}
 
+
+    static ImVec2 gui_pos{0, 0};
+    static ImVec2 gui_size{0, 0};
     void Menu::MainMenu()
     {
+
         if (!ImGui::Begin("Final Fantasy 7 Remake", &g_Engine->m_ShowMenu, 96 | ImGuiWindowFlags_NoTitleBar))
         {
             ImGui::End();
             return;
         }
 
-
+        //  shrouded background
+        auto draw = ImGui::GetWindowDrawList();
+        draw->AddRectFilled(gui_pos, { gui_pos.x + gui_size.x, gui_pos.y + gui_size.y }, ImColor(0.0f, 0.0f, 0.0f, .5f), 0.f);
+        
+        
         if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None))
         {
             if (ImGui::BeginTabItem("PLAYER"))
@@ -422,121 +558,269 @@ namespace DX11Base
             ImGui::EndTabBar();
         }
 
+
+        gui_pos = ImGui::GetWindowPos();
+        gui_size = ImGui::GetWindowSize();
         ImGui::End();
 	}
 
 	void Menu::HUD()
 	{
-        ImGui::SetNextWindowPos(ImVec2(10, 10));
-        if (!ImGui::Begin("FFVii Internal Launch Window", 0, 103))
-        {
-            ImGui::End();
-            return;
-        }
-        
-        ImGui::Text("FINAL FANTASY VII INTERNAL MENU LOADED");
-        ImGui::Text("PRESS [INSERT] OR [L3 + R3] TO SHOW THE MENU");
-        ImGui::Separator();
-        ImGui::TextColored(ImColor(255, 0, 0, 255), "MENU v1.2 | Released: May 23, 2024");
+        //  Welcome Message
+        if (g_Engine->m_ShowWelcome)
+            Widgets::WelcomeMessage();
 
-        ImGui::End();
+
+        //  Target Info
+        // @TODO: ImGui annoying navigation menu needs to be removed
+        //  Widgets::TargetInfo();
 	}
 
 	void Menu::Loops()
 	{
         if (AGame::bDemiGod)
-            AGame::Patches::RefillCloudHP();
+        {
+            switch (AGame::iSelectedPlayerIndex)
+            {
+                case 6: AGame::Patches::RefillPartyHP(); break;
+                default: AGame::Patches::RefillPlayerHP(AGame::iSelectedPlayerIndex); break;
+            }
+
+        }
 
         if (AGame::bDemiGodMagic)
-            AGame::Patches::RefillCloudMP();
-
-        if (AGame::bMaxLimit)
-            AGame::Patches::CloudMaxLimit();
+        {
+            switch (AGame::iSelectedPlayerIndex)
+            {
+                case 6: AGame::Patches::RefillPartyMP(); break;
+                default: AGame::Patches::RefillPlayerMP(AGame::iSelectedPlayerIndex); break;
+            }
+        }
 
         if (AGame::bMaxATB)
-            AGame::Patches::CloudMaxATB();
+        {
+
+            switch (AGame::iSelectedPlayerIndex)
+            {
+                case 6: AGame::Patches::PartyMaxATB(); break;
+                default: AGame::Patches::PlayerMaxATB(AGame::iSelectedPlayerIndex); break;
+            }
+        }
+
+        if (AGame::bMaxLimit)
+        {
+            switch (AGame::iSelectedPlayerIndex)
+            {
+                case 6: AGame::Patches::PartyMaxLimit(); break;
+                default: AGame::Patches::PlayerMaxLimit(AGame::iSelectedPlayerIndex); break;
+            }
+        }
 	}
 
     //----------------------------------------------------------------------------------------------------
     //										GUI
     //-----------------------------------------------------------------------------------
 
-    void GUI::TextCentered(const char* pText)
+    void GUI::TextCentered(const std::string& pText)
     {
-        ImVec2 textSize = ImGui::CalcTextSize(pText);
+        ImVec2 textSize = ImGui::CalcTextSize(pText.c_str());
         ImVec2 windowSize = ImGui::GetWindowSize();
         ImVec2 textPos = ImVec2((windowSize.x - textSize.x) * 0.5f, (windowSize.y - textSize.y) * 0.5f);
         ImGui::SetCursorPos(textPos);
-        ImGui::Text("%s", pText);
+        ImGui::Text("%s", pText.c_str());
     }
 
-    //  @ATTN: max buffer is 256chars
-    void GUI::TextCenteredf(const char* pText, ...)
+    void GUI::TextCenteredf(const std::string pText, ...)
     {
+        float windowWidth = ImGui::GetWindowSize().x;
+        float textWidth = ImGui::CalcTextSize(pText.c_str()).x;
+        ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
         va_list args;
         va_start(args, pText);
-        char buffer[256];
-        vsnprintf(buffer, sizeof(buffer), pText, args);
+        ImGui::TextV(pText.c_str(), args);
         va_end(args);
-
-        TextCentered(buffer);
     }
 
-    void GUI::DrawText_(ImVec2 pos, ImColor color, const char* pText, float fontSize)
+    void GUI::Tooltip(const std::string& tip)
     {
-        ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), fontSize, pos, color, pText, pText + strlen(pText), 800, 0);
+        if (!ImGui::IsItemHovered())
+            return;
+
+        ImGui::SetTooltip(tip.c_str());
     }
 
-    //  @ATTN: max buffer is 256chars
-    void GUI::DrawTextf(ImVec2 pos, ImColor color, const char* pText, float fontSize, ...)
+    bool GUI::Toggle(const std::string& label, bool* v)
     {
-        va_list args;
-        va_start(args, fontSize);
-        char buffer[256];
-        vsnprintf(buffer, sizeof(buffer), pText, args);
-        va_end(args);
+        using namespace ImGui;
 
-        DrawText_(pos, color, buffer, fontSize);
-    }
+        ImGuiWindow* window = GetCurrentWindow();
+        if (window->SkipItems)
+            return false;
 
-    void GUI::DrawTextCentered(ImVec2 pos, ImColor color, const char* pText, float fontSize)
-    {
-        float textSize = ImGui::CalcTextSize(pText).x;
-        ImVec2 textPosition = ImVec2(pos.x - (textSize * 0.5f), pos.y);
-        DrawText_(textPosition, color, pText, fontSize);
-    }
+        ImGuiContext& g = *GImGui;
+        const ImGuiStyle& style = g.Style;
+        const ImGuiID id = window->GetID(label.c_str());
+        const ImVec2 label_size = CalcTextSize(label.c_str(), NULL, true);
 
-    //  @ATTN: max buffer is 256chars
-    void GUI::DrawTextCenteredf(ImVec2 pos, ImColor color, const char* pText, float fontSize, ...)
-    {
-        va_list args;
-        va_start(args, fontSize);
-        char buffer[256];
-        vsnprintf(buffer, sizeof(buffer), pText, args);
-        va_end(args);
+        const float square_sz = GetFrameHeight();
+        ImVec2 pos = window->DC.CursorPos;
 
-        DrawTextCentered(pos, color, pText, fontSize);
-    }
+        const ImRect total_bb(pos, pos + ImVec2(square_sz + (label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f), label_size.y + style.FramePadding.y * 2.0f));
+        ItemSize(total_bb, style.FramePadding.y);
+        if (!ItemAdd(total_bb, id))
+            return false;
 
-    //  @ATTN: max buffer is 256chars
-    void GUI::DrawTextWindow(ImVec2 pos, const char* fmt, ...)
-    {
-
-        va_list args;
-        va_start(args, fmt);
-        char buffer[256];
-        vsnprintf(buffer, sizeof(buffer), fmt, args);
-        va_end(args);
-
-        ImGui::SetNextWindowPos(pos);
-        if (!ImGui::Begin(std::string("##").append(buffer).c_str(), 0, 103))
+        bool hovered, held;
+        bool pressed = ButtonBehavior(total_bb, id, &hovered, &held);
+        if (pressed)
         {
-            ImGui::End();
+            *v = !(*v);
+            MarkItemEdited(id);
+        }
+
+
+        //  COLOR PROPERTIES
+        ImU32 uncheck_col = GetColorU32(ImGuiCol_FrameBg);
+        // ImColor uncheck_col = ImColor(42, 42, 42, 255);// GetColorU32(ImGuiCol_FrameBg);
+        ImU32 circle_col = GetColorU32(ImGuiCol_NavWindowingDimBg);
+        //ImU32 check_col = GetColorU32(ImGuiCol_CheckMark);
+        ImU32 check_col = ImColor(42, 42, 42, 255);;
+
+        //  Position
+        const ImRect check_bb(pos, ImVec2(pos.x, pos.y) + ImVec2(square_sz * 1.5, square_sz * 0.8));
+        RenderNavHighlight(total_bb, id);
+        auto col = GetColorU32((held && hovered) ? ImGuiCol_FrameBgActive : hovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg);
+        ImVec2 UpperLeft(check_bb.GetTL().x, check_bb.GetTL().y + 2.f);
+        ImVec2 LowerRight(check_bb.GetBR().x, check_bb.GetBR().y + 2.f);
+        ImRect newRect(UpperLeft, LowerRight);
+        window->DrawList->AddRectFilled(newRect.Min, newRect.Max, uncheck_col, 10); //  Color
+        ImVec2 sUpperLeft(check_bb.GetTL().x, check_bb.GetTL().y + 2.f);
+        ImVec2 sLowerRight(check_bb.GetCenter().x, check_bb.GetBR().y + 2.f);
+        ImRect sRect(sUpperLeft, sLowerRight);
+        window->DrawList->AddRectFilled(sRect.Min, sRect.Max, circle_col, 10);  // COLOR
+
+        //reset
+        if (*v) 
+        {
+            window->DrawList->AddRectFilled(ImVec2(newRect.Min.x - 1.f, newRect.Min.y - 1.f), ImVec2(newRect.Max.x + .5f, newRect.Max.y + 1.f), check_col, 10); //  COLOR
+            ImVec2 tUpperLeft(check_bb.GetCenter().x, check_bb.GetTL().y + 2.f);
+            ImVec2 tLowerRight(check_bb.GetBR().x, check_bb.GetBR().y + 2.f);
+            ImRect tRect(tUpperLeft, tLowerRight);
+            window->DrawList->AddRectFilled(tRect.Min, tRect.Max, circle_col, 10);
+        }
+
+        if (label_size.x > 0.0f)
+            RenderText(ImVec2(check_bb.Max.x + style.ItemInnerSpacing.x, check_bb.Min.y + style.FramePadding.y), label.c_str());
+
+        IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window->DC.ItemFlags | ImGuiItemStatusFlags_Checkable | (*v ? ImGuiItemStatusFlags_Checked : 0));
+        return pressed;
+    }
+
+    void GUI::DrawText_(const ImVec2& pos, const ImColor& color, const std::string& text, const float& szFont)
+    {
+        ImGui::GetWindowDrawList()->AddText(ImGui::GetFont(), szFont, pos, color, text.c_str(), text.c_str() + text.size(), 800.f, nullptr);
+    }
+
+    void GUI::DrawBGText(const ImVec2& pos, const ImColor& color, const std::string& text, const ImColor& background, const float& szFont)
+    {
+        auto pFont = ImGui::GetFont();
+        const ImVec2& textSize = ImGui::CalcTextSize(text.c_str());
+        ImRect textRect = ImRect(pos, pos + textSize);
+        if (szFont > 0.f)
+        {
+            const ImVec2& scaledTextSize = ImVec2(textSize.x * szFont / pFont->FontSize, szFont);
+            ImVec2 scaledTextPos = ImVec2(pos.x - (scaledTextSize.x * .5f), pos.y);
+        }
+        ImGui::GetWindowDrawList()->AddRectFilled(textRect.Min, textRect.Max, background);
+        DrawText_(textRect.Min, color, text, szFont);
+    }
+
+    void GUI::DrawBorderText(const ImVec2& pos, const ImColor& color, const std::string& text, const ImColor& border, const float& szFont)
+    {
+        auto pFont = ImGui::GetFont();
+        const ImVec2& textSize = ImGui::CalcTextSize(text.c_str());
+        ImRect textRect = ImRect(pos, pos + textSize);
+        if (szFont > 0.f)
+        {
+            const ImVec2& scaledTextSize = ImVec2(textSize.x * szFont / pFont->FontSize, szFont);
+            ImVec2 scaledTextPos = ImVec2(pos.x - (scaledTextSize.x * .5f), pos.y);
+            textRect = (ImRect(scaledTextPos, scaledTextPos + scaledTextSize));
+        }
+        ImGui::GetWindowDrawList()->AddRect(textRect.Min, textRect.Max, border);
+        DrawText_(textRect.Min, color, text, szFont);
+    }
+
+    void GUI::DrawTextCentered(const ImVec2& pos, const ImColor& color, const std::string& text, const float& szFont)
+    {
+        const ImVec2& textSize = ImGui::CalcTextSize(text.c_str());
+        ImVec2 textPosition = ImVec2(pos.x - (textSize.x * 0.5f), pos.y);
+        if (szFont <= 0.f)
+        {
+            DrawText_(textPosition, color, text, szFont);
             return;
         }
 
-        ImGui::Text("%s", buffer);
+        auto pFont = ImGui::GetFont();
+        ImVec2 scaledTextSize = ImVec2(textSize.x * szFont / pFont->FontSize, szFont);
+        ImVec2 scaledTextPos = ImVec2(pos.x - (scaledTextSize.x * .5f), pos.y);
+        DrawText_(scaledTextPos, color, text, szFont);
+    }
 
-        ImGui::End();
+    void GUI::DrawBGTextCentered(const ImVec2& pos, const ImColor& color, const std::string& text, const ImColor& background, const float& szFont)
+    {
+        const ImVec2& textSize = ImGui::CalcTextSize(text.c_str());
+        ImVec2 textPosition = ImVec2(pos.x - (textSize.x * 0.5f), pos.y);
+        if (szFont <= 0.f)
+        {
+            DrawBGText(textPosition, color, text, background, szFont);
+            return;
+        }
+
+        auto pFont = ImGui::GetFont();
+        ImVec2 scaledTextSize = ImVec2(textSize.x * szFont / pFont->FontSize, szFont);
+        ImVec2 scaledTextPos = ImVec2(pos.x - (scaledTextSize.x * .5f), pos.y);
+        ImGui::GetWindowDrawList()->AddRectFilled(scaledTextPos, scaledTextPos + scaledTextSize, background);
+        DrawText_(scaledTextPos, color, text, szFont);
+    }
+
+    void GUI::DrawBorderTextCentered(const ImVec2& pos, const ImColor& color, const std::string& text, const ImColor& border, const float& szFont)
+    {
+        const ImVec2& textSize = ImGui::CalcTextSize(text.c_str());
+        ImVec2 textPosition = ImVec2(pos.x - (textSize.x * 0.5f), pos.y);
+        if (szFont <= 0.f)
+        {
+            DrawBorderText(textPosition, color, text, border, szFont);
+            return;
+        }
+
+        auto pFont = ImGui::GetFont();
+        ImVec2 scaledTextSize = ImVec2(textSize.x * szFont / pFont->FontSize, szFont);
+        ImVec2 scaledTextPos = ImVec2(pos.x - (scaledTextSize.x * .5f), pos.y);
+        ImGui::GetWindowDrawList()->AddRect(scaledTextPos, scaledTextPos + scaledTextSize, border);
+        DrawText_(scaledTextPos, color, text, szFont);
+    }
+
+    void GUI::Line(const ImVec2& posA, const ImVec2& posB, const ImColor& color, const float& thickness)
+    {
+        ImGui::GetWindowDrawList()->AddLine(posA, posB, color, thickness);
+    }
+
+    void GUI::Circle(const ImVec2& pos, const ImColor& color, const float& radius, const float& thickness, const float& segments)
+    {
+        ImGui::GetWindowDrawList()->AddCircle(pos, radius, color, segments, thickness);
+    }
+
+    void GUI::CleanLine(const ImVec2& posA, const ImVec2& posB, const ImColor& color, const float& thickness)
+    {
+        Line(posA, posB, ImColor(0.0f, 0.0f, 0.0f, color.Value.w), (thickness + 0.25));
+        Line(posA, posB, ImColor(1.0f, 1.0f, 1.0f, color.Value.w), (thickness + 0.15));
+        Line(posA, posB, color, thickness);
+    }
+
+    void GUI::CleanCircle(const ImVec2& pos, const ImColor& color, const float& radius, const float& thickness, const float& segments)
+    {
+        Circle(pos, ImColor(0.0f, 0.0f, 0.0f, color.Value.w), radius, thickness, segments);
+        Circle(pos, ImColor(1.0f, 1.0f, 1.0f, color.Value.w), radius, thickness, segments);
+        Circle(pos, color, radius, thickness, segments);
     }
 }

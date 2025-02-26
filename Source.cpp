@@ -42,9 +42,9 @@ DWORD WINAPI MainThread(LPVOID hInstance)
             if ((DX11Base::Engine::GamePadGetKeyState(XINPUT_GAMEPAD_RIGHT_THUMB | XINPUT_GAMEPAD_LEFT_THUMB) || DX11Base::Engine::GetKeyState(VK_INSERT, 0)) && ((GetTickCount64() - LastTick) > 500))
                 //if ((GetAsyncKeyState(VK_INSERT) & 0x8000) && ((GetTickCount64() - LastTick) > 500))
             {
-                //  Hide our info message
-                if (DX11Base::g_Engine->m_ShowHud == TRUE)
-                    DX11Base::g_Engine->m_ShowHud = FALSE;
+                //  Hide our welcome message
+                if (DX11Base::g_Engine->m_ShowWelcome)
+                    DX11Base::g_Engine->m_ShowWelcome ^= 1;
 
                 //  Show / Hide Menu
                 DX11Base::g_Engine->m_ShowMenu ^= 1;

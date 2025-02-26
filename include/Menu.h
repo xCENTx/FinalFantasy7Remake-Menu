@@ -18,17 +18,22 @@ namespace DX11Base
 
 	class GUI
 	{
-	public:
-		//	WIDGETS
-		static void TextCentered(const char* pText);
-		static void TextCenteredf(const char* pText, ...);
+	public:	//	widget
+		static void TextCentered(const std::string& pText);
+		static void TextCenteredf(const std::string pText, ...);
+		static void Tooltip(const std::string& tip);
+		static bool Toggle(const std::string& label, bool* v);
 
-	public:
-		//	CANVAS
-		static void DrawText_(ImVec2 pos, ImColor color, const char* pText, float fontSize);
-		static void DrawTextf(ImVec2 pos, ImColor color, const char* pText, float fontSize, ...);
-		static void DrawTextCentered(ImVec2 pos, ImColor color, const char* pText, float fontsize);
-		static void DrawTextCenteredf(ImVec2 pos, ImColor color, const char* pText, float fontsize, ...);
-		static void DrawTextWindow(ImVec2 pos, const char* fmt, ...);
+	public:	//	canvas
+		static void DrawText_(const ImVec2& pos, const ImColor& color, const std::string& text, const float& szFont = 0.f);
+		static void DrawBGText(const ImVec2& pos, const ImColor& color, const std::string& text, const ImColor& background, const float& szFont = 0.f);
+		static void DrawBorderText(const ImVec2& pos, const ImColor& color, const std::string& text, const ImColor& border, const float& szFont = 0.f);
+		static void DrawTextCentered(const ImVec2& pos, const ImColor& color, const std::string& text, const float& szFont = 0.f);
+		static void DrawBGTextCentered(const ImVec2& pos, const ImColor& color, const std::string& text, const ImColor& background, const float& szFont = 0.f);
+		static void DrawBorderTextCentered(const ImVec2& pos, const ImColor& color, const std::string& text, const ImColor& border, const float& szFont = 0.f);
+		static void Line(const ImVec2& posA, const ImVec2& posB, const ImColor& color, const float& thickness = 1.0f);
+		static void Circle(const ImVec2& pos, const ImColor& color, const float& radius, const float& thickness = 1.0f, const float& segments = 64);
+		static void CleanLine(const ImVec2& posA, const ImVec2& posB, const ImColor& color, const float& thickness = 1.0f);
+		static void CleanCircle(const ImVec2& pos, const ImColor& color, const float& radius, const float& thickness = 1.0f, const float& segments = 64);
 	};
 }

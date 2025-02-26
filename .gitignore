@@ -1,4 +1,17 @@
+# ignore compile output
 .vs/
 x64/
+x86/
+release/
 debug/
 bin/
+
+# ignore binaries
+*.exe
+*.dll
+*.lib
+
+# ignore user settings
+*.vcxproj.user
+*.vcxproj.filters
+*.code-workspace

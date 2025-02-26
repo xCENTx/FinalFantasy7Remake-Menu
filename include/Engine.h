@@ -19,10 +19,10 @@
 #include <chrono>
 
 //	External Libraries
-#include "libs/ImGui/imgui.h"
-#include "libs/ImGui/imgui_internal.h"
-#include "libs/ImGui/imgui_Impl_dx11.h"
-#include "libs/ImGui/imgui_Impl_Win32.h"
+#include <imgui.h>
+#include <imgui_internal.h>
+#include <backends/imgui_Impl_dx11.h>
+#include <backends/imgui_Impl_Win32.h>
 #include "libs/MinHook/MinHook.h"
 
 namespace DX11Base 
@@ -46,8 +46,10 @@ namespace DX11Base
 
 		//	MENU
 		bool								m_ShowMenu{ false };
-		bool								m_ShowHud{ false };
+		bool								m_ShowHud{ true };
 		bool								m_ShowDemo{ false };
+		bool								m_ShowWelcome{ false };
+		
 	public:
 		void								Init();
 
