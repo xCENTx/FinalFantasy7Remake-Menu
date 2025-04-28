@@ -333,7 +333,7 @@ namespace FF7Remake
 		if (g_Engine->m_ShowMenu)
 			return 0;
 
-		XInput_State_stub(a1);
+		return XInput_State_stub(a1);
 	}
 
 	//	
@@ -934,6 +934,40 @@ namespace FF7Remake
 		{
 			case 1: result = "Potion"; break;
 			case 2: result = "Ether"; break;
+			case 6: result = "Grenade"; break;
+			case 7: result = "Moogle Medal"; break;
+			case 8: result = "Phoenix Down"; break;
+			case 9: result = "Hi-Potion"; break;
+			case 10: result = "Yellow Flower"; break;
+			case 12: result = "Adrenaline"; break;
+			case 13: result = "Sedative"; break;
+			case 15: result = "Combat Analyzer"; break; // Key Item
+			case 16: result = "Maidens Kiss"; break;
+			case 18: result = "Antidote"; break;
+			case 19: result = "Elixir"; break;
+			case 20: result = "Watch Security Key"; break;	//	Key Item
+			case 23: result = "Shinra ID Card"; break;	//	Key Item
+			case 25: result = "Orb of Gravity"; break;	
+			case 27: result = "Hazardous Material"; break;	
+			case 28: result = "Remdedy"; break;	
+			case 37: result = "Grappling Gun"; break; // key item
+			case 38: result = "Echo Mist"; break;
+			case 40: result = "Sector 5 Reactor Keycard"; break; // key item
+			case 41: result = "Big Bomber"; break;
+			case 43: result = "Mega-Potion"; break;
+			case 46: result = "Smelling Salts"; break;
+			case 50: result = "Celeris"; break;
+			case 51: result = "Handmade Necklace"; break;  // key item
+			case 52: result = "Moogle Membership Card"; break;  // key item
+			case 54: result = "Graveyard Key"; break;  // key item
+			case 58: result = "Guardian Angel's Calling Cards Key"; break;  // key item
+			case 59: result = "Sam's Coin"; break;  // key item
+			case 60: result = "Tournament Entry Form"; break;  // key item
+			case 62: result = "Fuzzy Wuzzy"; break;  
+			case 63: result = "Mr. Cuddlesworth"; break;  
+			case 64: result = "Sam's Requests"; break;  // key item
+
+
 			//	case : result = "Gil"; break;
 			//	case : result = "Grenade"; break;
 			//	case : result = "Moogle Medal"; break;

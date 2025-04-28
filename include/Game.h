@@ -22,7 +22,7 @@ namespace FF7Remake
 	
 	namespace Offsets
 	{
-		constexpr auto						oGameBase{ 0x57CA5E8 };					//	48 8B 05 ? ? ? ? 4C 89 B4 24 ? ? ? ? 44 0F B6 76
+		constexpr auto						oGameBase{ 0x57CA5E0 };					//	48 8B 05 ? ? ? ? 4C 89 B4 24 ? ? ? ? 44 0F B6 76 : subtract 0x8 from the qword for matchstate
 		constexpr auto						oGameBase_CloudState{ 0x880 };			//	Analyze APlayerState_SetHealth_hook
 		constexpr auto						oGameBase_ItemsList{ 0x35640 };			//	Analyze APlayerState_SubItem_hook
 		constexpr auto						oGameBase_MateriaList{ 0x20A8 };		//	
