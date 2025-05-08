@@ -327,6 +327,8 @@ namespace DX11Base
             GUI::Toggle("NO HP LOSS", &AGame::bNullDmg);
             GUI::Toggle("NO MANA LOSS", &AGame::bNullMgk);
             GUI::Toggle("NO ITEM LOSS", &AGame::bNullItem);
+            GUI::Toggle("NO GIL LOSS", &AGame::bNullGil);
+            GUI::Toggle("INFINITE GIL", &AGame::bMaxGil);
             GUI::Toggle("XP MOD", &AGame::bXpFarm);
 
             if (GUI::Toggle("MODIFY TIME SCALE", &AGame::bModTimeScale) && !AGame::bModTimeScale)
@@ -361,7 +363,7 @@ namespace DX11Base
             ImGui::BeginChild("##ITEMS_LIST", ImVec2(ImGui::GetContentRegionAvail().x - 5.f, 250.f), true);
             {
                 AItem* _itemsList = pGameState->GetItems();
-                for (int i = 0; i < 65; i++)
+                for (int i = 0; i < 0x7FF; i++)
                 {
                     AItem item = _itemsList[i];
                     if (item.Valid == -1)
@@ -472,7 +474,6 @@ namespace DX11Base
             ImGui::Spacing();
             ImGui::Separator();
             ImGui::Spacing();
-
             if (ImGui::Button("UNHOOK DLL", ImVec2(ImGui::GetContentRegionAvail().x - 3, 20))) 
             {
                 g_Engine->m_ShowMenu = false;

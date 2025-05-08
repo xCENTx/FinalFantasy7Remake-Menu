@@ -1,5 +1,8 @@
 #pragma once
 #include <Game.h>
+#define IDA_OFFSET(offset) ((__int64)GetModuleHandle(NULL) + offset)
+#define IDA_DEREF(offset) (*(__int64*)IDA_OFFSET(offset))
+#define IDA_CALL(retType, offset, ...) ((retType(*)(__VA_ARGS__))IDA_OFFSET(offset))
 
 namespace FF7Remake 
 {
@@ -13,10 +16,15 @@ namespace FF7Remake
 	bool											AGame::bDemiGodMagic{ false };
 	bool											AGame::bMaxLimit{ false };
 	bool											AGame::bMaxATB{ false };
+	bool											AGame::bMaxGil{ false };
 	bool											AGame::bPauseGame{ false };
 	bool											AGame::bNullDmg{ false };
 	bool											AGame::bNullMgk{ false };
 	bool											AGame::bNullItem{ false };
+	bool											AGame::bNullGil{ false };
+	bool											AGame::bRefundGil{ false };
+	bool											AGame::bGilMp{ false };
+	int												AGame::iGilMpScalar{ 2 };
 	bool											AGame::bModTimeScale{ false };
 	float											AGame::fTimeScalar{ 1.0f };
 	bool											AGame::bModTargetLevel{ false };
@@ -26,7 +34,7 @@ namespace FF7Remake
 	bool											AGame::bNullTargetDmg{ false };			//	target takes no damage
 	bool											AGame::bTargetAlwaysStagger{ false };	//	target defense is set to 0
 	bool											AGame::bXpFarm{ false };				//	sets targets hp to 0, prevents targets from attacking , sets target stagger to max and sets target to max level for max reward
-	STargetInfo										AGame::sTargetEntity{};					//	structure contains last most recent target entity information obtained in ATargetEntity_GetHP_hook
+	STargetInfo										AGame::sTargetEntity{};					//	structure contains most recent target entity information obtained in ATargetEntity_GetHP_hook
 	__int64											AGame::Hooks::pXInput_State{ 0 };
 	__int64											AGame::Hooks::pAScene_Update{ 0 };
 	__int64											AGame::Hooks::pAPlayerState_SetHealth{ 0 };
@@ -34,6 +42,7 @@ namespace FF7Remake
 	__int64											AGame::Hooks::pAPlayerState_SubItem{ 0 };
 	__int64											AGame::Hooks::pATargetEntity_GetHP{ 0 };
 	__int64											AGame::Hooks::pATargetEntity_GetStaggerAmount{ 0 };
+	__int64											AGame::Hooks::pAGameState_SetGil{ 0 };
 	AGame::Hooks::XInput_State						AGame::Hooks::XInput_State_stub;
 	AGame::Hooks::AScene_Update						AGame::Hooks::AScene_Update_stub;
 	AGame::Hooks::APlayerState_SetHealth			AGame::Hooks::APlayerState_SetHealth_stub;
@@ -41,7 +50,7 @@ namespace FF7Remake
 	AGame::Hooks::APlayerState_SubItem				AGame::Hooks::APlayerState_SubItem_stub;
 	AGame::Hooks::ATargetEntity_GetHP				AGame::Hooks::ATargetEntity_GetHP_stub;
 	AGame::Hooks::ATargetEntity_GetStaggerAmount	AGame::Hooks::ATargetEntity_GetStaggerAmount_stub;
-
+	AGame::Hooks::AGameState_SetGil					AGame::Hooks::AGameState_SetGil_stub;
 	//----------------------------------------------------------------------------------------------------
 	//										AGAME
 	//-----------------------------------------------------------------------------------
@@ -59,6 +68,7 @@ namespace FF7Remake
 		Hooks::pAPlayerState_SubItem				= (g_Engine->g_GameBaseAddr + FunctionOffsets::fnSubItem);
 		Hooks::pATargetEntity_GetHP					= (g_Engine->g_GameBaseAddr + FunctionOffsets::fnTargetGetHP);
 		Hooks::pATargetEntity_GetStaggerAmount		= (g_Engine->g_GameBaseAddr + FunctionOffsets::fnTargetGetStaggerAmount);
+		Hooks::pAGameState_SetGil					= IDA_OFFSET(FunctionOffsets::fnSetGil);
 
 
 
@@ -89,6 +99,9 @@ namespace FF7Remake
 		//	Target Entity Stagger Handler
 		if (Hooks::pATargetEntity_GetStaggerAmount)
 			Hooking::CreateHook((LPVOID)Hooks::pATargetEntity_GetStaggerAmount, &Hooks::ATargetEntity_GetStaggerAmount_hook, (void**)&Hooks::ATargetEntity_GetStaggerAmount_stub);
+
+		if (Hooks::pAGameState_SetGil)
+			Hooking::CreateHook((LPVOID)Hooks::pAGameState_SetGil, &Hooks::AGameState_SetGil_hook, (void**)&Hooks::AGameState_SetGil_stub);
 	}
 
 	void AGame::ShutdownGame()
@@ -113,6 +126,9 @@ namespace FF7Remake
 
 		if (Hooks::pATargetEntity_GetStaggerAmount)
 			Hooking::DisableHook((LPVOID)Hooks::pATargetEntity_GetStaggerAmount);
+
+		if (Hooks::pAGameState_SetGil)
+			Hooking::DisableHook((LPVOID)Hooks::pAGameState_SetGil);
 	}
 
 #pragma endregion
@@ -380,6 +396,140 @@ namespace FF7Remake
 
 		//	exec original fn
 		AScene_Update_stub(p);
+	}
+
+	void AGame::Hooks::AGameState_SetGil_hook(__int64 pGil, int newAmount)
+	{
+
+		/// PORT NOTES
+		/*
+			void __fastcall x__SetGil(__int64 a1, int newCount)
+			{
+			  unsigned int v2; // er8
+			  int v5; // ecx
+			  __int64 v6; // rcx
+			  __int64 v7; // rcx
+			  __int64 v8; // rax
+			  __int64 itemIndex; // rax
+			  __int64 pItem_gil; // rdx
+			  __int64 pInfo_gil; // rax
+			  int szMax_gil; // eax
+			
+			  v2 = *(unsigned __int8 *)(a1 + 0x18);
+			  if ( (unsigned __int8)v2 > 0xEu || (v5 = 26864, !_bittest(&v5, v2)) )
+			  {
+			    if ( ((((_BYTE)v2 - 8) & 0xFA) != 0 || (_BYTE)v2 == 13) && ((unsigned __int8)v2 <= 3u || (_BYTE)v2 == 10) )
+			    {
+			      v6 = x__gGameState;
+			      if ( !x__gGameState )
+			      {
+			        v7 = qword_58064C8;
+			        if ( !qword_58064C8 )
+			        {
+			          sub_1C28740();
+			          v7 = qword_58064C8;
+			        }
+			        v8 = (*(__int64 (__fastcall **)(__int64, __int64, _QWORD))(*(_QWORD *)v7 + 0x10i64))(v7, 0xB6DF0i64, 0i64);
+			        if ( v8 )
+			          v6 = sub_B28C40(v8);
+			        else
+			          v6 = 0i64;
+			        x__gGameState = v6;
+			      }
+			      itemIndex = *(int *)(a1 + 0x1C);          // gil index in items array
+			      if ( (unsigned int)itemIndex <= 0x7FF )   // max item array count ?
+			      {
+			        pItem_gil = v6 + 24 * (itemIndex + 0x2398);// get gil item in player item array
+			        if ( pItem_gil )
+			        {
+			          pInfo_gil = *(_QWORD *)(a1 + 0x10);   // get gil properties
+			          if ( pInfo_gil )
+			          {
+			            szMax_gil = *(_DWORD *)(pInfo_gil + 0x88);// gil max count
+			            if ( szMax_gil <= newCount )
+			              newCount = szMax_gil;
+			            *(_DWORD *)(pItem_gil + 0xC) = newCount;// set gil
+			          }
+			        }
+			      }
+			    }
+			  }
+			}
+		
+		
+		
+		
+		*/
+
+		auto fn_detour = [](__int64 pGil, int newAmount) -> bool
+		{
+			__int64 v6; // rcx  
+			__int64 itemIndex; // rax
+			__int64 pItem_gil; // rdx
+			__int64 pInfo_gil; // rax  
+			int szMax_gil; // eax
+			int currentGil;	//	
+			int changeGil;	//	difference
+
+			v6 = reinterpret_cast<__int64>(AGame::Helpers::GetGameState());
+			
+			itemIndex = *(int*)(pGil + 0x1C);
+			if (itemIndex >= 0x7FF)
+				return false;
+
+			pItem_gil = v6 + 24 * (itemIndex + 0x2398);
+			if (!pItem_gil)
+				return false;
+
+			pInfo_gil = *(INT64*)(pGil + 0x10);
+			if (!pInfo_gil)
+				return false;
+
+			szMax_gil = *(DWORD*)(pInfo_gil + 0x88); 
+			if (szMax_gil <= newAmount)
+				newAmount = szMax_gil;
+
+			currentGil = *(DWORD*)(pItem_gil + 0xC);
+			changeGil = newAmount - currentGil;
+
+			if (bMaxGil)
+			{
+				newAmount = szMax_gil;
+			}
+			else if (newAmount < currentGil)		//	LOSS
+			{
+				/* refund gil on loss events */
+				if (bRefundGil)
+				{
+					newAmount += changeGil;
+
+					if (newAmount >= szMax_gil)
+						newAmount = szMax_gil;
+				}
+
+				/* prevent gil loss only if refund is not enabled as that also prevents gil loss */
+				else if (bNullGil) 
+					return true;
+			}
+			else if (newAmount > currentGil && bGilMp)	//	GAIN
+			{
+				newAmount += changeGil * iGilMpScalar;
+				if (newAmount >= szMax_gil)
+					newAmount = szMax_gil;
+			}	
+
+			// set acquired gil
+			*(DWORD*)(pItem_gil + 0xC) = newAmount;
+			
+			return true;
+		};
+
+
+		if (fn_detour(pGil, newAmount))
+			return;
+
+
+		AGameState_SetGil_stub(pGil, newAmount);
 	}
 
 	//	sets hp to party members by traditional game mechanics
@@ -825,13 +975,13 @@ namespace FF7Remake
 				if (AGame::bKillTarget)
 					pTarget->SetHP(0);
 
-				AGame::sTargetEntity = STargetInfo(pTarget);
-				if (!AGame::sTargetEntity.Update())
-					AGame::sTargetEntity.ClearTarget();
+				//	AGame::sTargetEntity = STargetInfo(pTarget);
+				//	if (!AGame::sTargetEntity.Update())
+				//		AGame::sTargetEntity.ClearTarget();
 
 			}
-			else if (AGame::sTargetEntity.bValid && AGame::sTargetEntity.IsCurrentTarget(pTarget))
-				AGame::sTargetEntity.ClearTarget();
+			//	else if (AGame::sTargetEntity.bValid && AGame::sTargetEntity.IsCurrentTarget(pTarget))
+			//		AGame::sTargetEntity.ClearTarget();
 
 			bEditing = false;
 		}
@@ -966,6 +1116,7 @@ namespace FF7Remake
 			case 62: result = "Fuzzy Wuzzy"; break;  
 			case 63: result = "Mr. Cuddlesworth"; break;  
 			case 64: result = "Sam's Requests"; break;  // key item
+			case 70: result = "Turbo Ether"; break;
 
 
 			//	case : result = "Gil"; break;
@@ -1319,5 +1470,36 @@ namespace FF7Remake
 
 
 #pragma endregion
+
+	AGameState* AGame::Helpers::GetGameState()
+	{
+		__int64 v6; // rcx  
+		__int64 v7; // rcx  
+		__int64 v8; // rax
+		__int64 x__gGameState = IDA_DEREF(0x57CA5E8);
+		__int64 itemIndex; // rax
+		__int64 pItem_gil; // rdx
+		__int64 pInfo_gil; // rax
+		int szMax_gil; // eax
+		
+		v6 = x__gGameState;
+		if (!x__gGameState)
+		{
+			v7 = IDA_DEREF(0x58064C8);
+			if (!IDA_DEREF(0x58064C8))
+			{
+				IDA_CALL(void, 0x1C28740);
+				v7 = IDA_DEREF(0x58064C8);
+			}
+			v8 = (*(__int64(__fastcall**)(__int64, __int64, INT64))(*(INT64*)v7 + 0x10))(v7, 0xB6DF0, 0);
+			if (v8)
+				v6 = IDA_CALL(__int64, 0xB28C40, __int64)(v8);
+			else
+				v6 = 0i64;
+			x__gGameState = v6;
+		}
+
+		return reinterpret_cast<AGameState*>(x__gGameState);
+	}
 
 }
