@@ -626,7 +626,7 @@ namespace DX11Base
         ImVec2 textSize = ImGui::CalcTextSize(pText.c_str());
         ImVec2 windowSize = ImGui::GetWindowSize();
         ImVec2 textPos = ImVec2((windowSize.x - textSize.x) * 0.5f, (windowSize.y - textSize.y) * 0.5f);
-        ImGui::SetCursorPos(textPos);
+        ImGui::SetCursorPos({textPos.x, ImGui::GetCursorPosY()});
         ImGui::Text("%s", pText.c_str());
     }
 
