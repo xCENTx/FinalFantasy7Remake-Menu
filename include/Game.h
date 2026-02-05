@@ -22,7 +22,9 @@ namespace FF7Remake
 	
 	namespace Offsets
 	{
-		constexpr auto						oGameBase{ 0x57CA5E8 };					//	48 8B 05 ? ? ? ? 4C 89 B4 24 ? ? ? ? 44 0F B6 76
+		constexpr auto						gObjects{ 0x539e410 };					//	48 8D 05 ? ? ? ? C7 05 ? ? ? ? ? ? ? ? 48 8D 0D ? ? ? ? 48 89 05 ? ? ? ? 48 83 C4
+		constexpr auto						oGameBase{ 0x57CA5E0 };					//	 : subtract 0x8 from the qword for oGameState
+		constexpr auto						oGameState{ 0x57CA5E0 };				//	48 8B 05 ? ? ? ? 4C 89 B4 24 ? ? ? ? 44 0F B6 76
 		constexpr auto						oGameBase_CloudState{ 0x880 };			//	Analyze APlayerState_SetHealth_hook
 		constexpr auto						oGameBase_ItemsList{ 0x35640 };			//	Analyze APlayerState_SubItem_hook
 		constexpr auto						oGameBase_MateriaList{ 0x20A8 };		//	
@@ -30,15 +32,16 @@ namespace FF7Remake
 
 	namespace FunctionOffsets
 	{
-		constexpr auto						fnXinputState{ 0x1D253A0 };				//	XInput_State_hook	; FF 15 ? ? ? ? 85 C0 0F 94 C1 - 0x8E	; __int64 __fastcall x__XInput_UpdateState(__int64)
-		constexpr auto						fnSceneUpdate{ 0x16B9510 };				//	AScene_Update_hook	;	E8 ? ? ? ? 48 8B 0D ? ? ? ? 48 8B 89 ? ? ? ? 48 83 C4	; __int64 __fastcall x__AScene_Update(__int64)
+		constexpr auto						fnXinputState{ 0x1D253A0 };				//	XInput_State_hook			; FF 15 ? ? ? ? 85 C0 0F 94 C1 - 0x8E	; __int64 __fastcall x__XInput_UpdateState(__int64)
+		constexpr auto						fnSceneUpdate{ 0x16B9510 };				//	AScene_Update_hook			;	E8 ? ? ? ? 48 8B 0D ? ? ? ? 48 8B 89 ? ? ? ? 48 83 C4	; __int64 __fastcall x__AScene_Update(__int64)
 		constexpr auto						fnSetHealth{ 0x0AFDF80 };				//	APlayerState_SetHealth_hook	;	E8 ? ? ? ? 0F B6 CB E8 ? ? ? ? 8B D0	; __int64 __fastcall x__APlayerState_SubHealth(unsigned __int8, int)
 		constexpr auto						fnSetMana{ 0x0AFE190 };					//	APlayerState_SetMana_hook	;	E8 ? ? ? ? 48 83 C6 ? 48 3B F5 0F 85 ? ? ? ? 4C 8B 74 24 ? 48 8B 7C 24 ? 48 8B 5C 24 ? 48 83 C4	; __int64 __fastcall x__APlayerState_SetMana(unsigned __int8, int)
 		constexpr auto						fnSubItem{ 0x0B1F410 };					//	APlayerState_SubItem_hook	;	E8 ? ? ? ? B0 ? EB ? CC CC CC CC CC CC CC 48 89 5C 24 ? 57	; __int64 __fastcall x__APlayerState_SubItem(__int64, int)
 		constexpr auto						fnTargetGetHP{ 0x0889710 };				//	ATargetEntity_GetHP_hook	;	E8 ? ? ? ? 8B C8 88 45 ? C1 F9 ? 48 8D 55 ? 88 4D ? 41 B8 ? ? ? ? 8B C8 C1 F8 ? C1 F9 ? 88 45 ? 48 8B 07 88 4D ? 48 8B CF FF 50 ? 48 8B 5C 24	; __int64 __fastcall x__ATargetEntity_GetHP(__int64)
 		constexpr auto						fnTargetGetStaggerAmount{ 0x0891870 };	//	ATargetEntity_GetStaggerAmount_hook	;	48 8B 05 ? ? ? ? 48 39 41 ? 0F 94 C0 + 0x16	; float __fastcall x__ATargetEntity_GetStaggerAmount(__int64)
 		constexpr auto                      fnGetHighlitedEquipment{ 0x0AFF020 };	//	GetHighlitedEquipment_hook	;	E8 ? ? ? ? 8B 85 ? ? ? ? 44 8B 8D ? ? ? ? 44 8B 85	; __int64 __fastcall _GetHighlitedEquipment(_QWORD *, __int64)
-		constexpr auto						vfGetEquipmentByID{ 0x1996E80 };		//	vfGetEquipmentByID_hook	; __int64 __fastcall _vfGetEquipmentByID(__int64 a1, __int64 eqID)
+		constexpr auto						vfGetEquipmentByID{ 0x1996E80 };		//	vfGetEquipmentByID_hook		; __int64 __fastcall _vfGetEquipmentByID(__int64 a1, __int64 eqID)
+		constexpr auto						fnSetGil{ 0xB232E0 };					//	AGameState_SetGil_hook		;	E8 ? ? ? ? 49 8B 87 ? ? ? ? 48 8B 88 ? ? ? ? 48 85 C9 74 ? 48 8B 89 ? ? ? ? E8 ? ? ? ? C7 45 ? ? ? ? ? 48 8D 0D ? ? ? ? 48 89 4D ? 48 8D 55 ? 0F 28 45 ? 66 0F 7F 45 ? E8 ? ? ? ? 8B 4D ? 8B D8	;	void __fastcall x__SetGil(__int64 a1, int newCount)
 	}
 
 	namespace VtableOffsets
@@ -51,27 +54,32 @@ namespace FF7Remake
 	class AGame
 	{
 	public:
-		static class AGameBase*				gGameBase;				//0x0000
-		static int							iSelectedPlayerIndex;
-		static bool							bSelectedPlayer[7];
-		static bool							bDemiGod;
-		static bool							bDemiGodMagic;
-		static bool							bMaxLimit;
-		static bool							bMaxATB;
-		static bool							bPauseGame;
-		static bool							bNullDmg;
-		static bool							bNullMgk;
-		static bool							bNullItem;
-		static bool							bModTimeScale;
-		static float						fTimeScalar;
-		static bool							bModTargetLevel;
-		static int							iLevelScalar;
-		static bool							bKillTarget;
+		static class AGameBase*				gGameBase;				//	
+		static int							iSelectedPlayerIndex;	//	selected player party index
+		static bool							bSelectedPlayer[7];		//  selected player party member flags
+		static bool							bDemiGod;				//	prevents damage events < health
+		static bool							bDemiGodMagic;			//	sets demi god to magic < magic defense
+		static bool							bMaxLimit;				//	sets max limit
+		static bool							bMaxATB;				//	sets max ATB guags
+		static bool							bMaxGil;				//	sets gil to max amount and prevents loss of gil
+		static bool							bPauseGame;				//	pauses the game
+		static bool							bNullDmg;				//	disables health loss on damage events
+		static bool							bNullMgk;				//	disables mana loss on cast
+		static bool							bNullItem;				//	disables item loss on use
+		static bool							bNullGil;				//	disables gil loss on purchases
+		static bool							bRefundGil;				//	gain gil equal to what would be spent
+		static bool							bGilMp;					//	enables a gil multiplier on gain events
+		static int							iGilMpScalar;			//	gil multiplier
+		static bool							bModTimeScale;			//	
+		static float						fTimeScalar;			//	
+		static bool							bModTargetLevel;		//	
+		static int							iLevelScalar;			//	
+		static bool							bKillTarget;			//	kills the selected target
 		static bool							bNoTargetAttack;		//	target doesnt attack
 		static bool							bNullTargetDmg;			//	target takes no damage
 		static bool							bTargetAlwaysStagger;	//	target defense is set to 0
 		static bool							bXpFarm;				//	sets targets hp to 0, prevents targets from attacking , sets target stagger to max and sets target to max level for max reward
-		static struct STargetInfo			sTargetEntity;			//
+		static struct STargetInfo			sTargetEntity;			//  target entity struct
 
 	public:
 		static void							InitGame();
@@ -107,6 +115,11 @@ namespace FF7Remake
 			static AScene_Update AScene_Update_stub;
 			static __int64 pAScene_Update;
 
+			typedef void(__fastcall* AGameState_SetGil)(__int64, int);
+			static void __fastcall AGameState_SetGil_hook(__int64 a1, int a2);
+			static AGameState_SetGil AGameState_SetGil_stub;
+			static __int64 pAGameState_SetGil;
+
 			typedef __int64(__fastcall* APlayerState_SetHealth)(unsigned __int8, int);
 			static __int64 __fastcall APlayerState_SetHealth_hook(unsigned __int8 a1, int a2);
 			static APlayerState_SetHealth APlayerState_SetHealth_stub;
@@ -131,6 +144,12 @@ namespace FF7Remake
 			static __int64 __fastcall ATargetEntity_GetStaggerAmount_hook(__int64 a1);
 			static ATargetEntity_GetStaggerAmount ATargetEntity_GetStaggerAmount_stub;
 			static __int64 pATargetEntity_GetStaggerAmount;
+		};
+
+	public:
+		struct Helpers
+		{
+			static class AGameState* GetGameState();
 		};
 	};
 
