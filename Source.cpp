@@ -4,9 +4,9 @@ VOID WINAPI BackgroundThread()
 {
     while (g_bRunning)
     {
-        DX11Base::Menu::Loops();
+        DX11Base::Menu::Loops(); // menu background tasks
 
-        if (g_bKillswitch)
+        if (g_bKillswitch) // exit loop
         {
            FF7Remake::AGame::ShutdownGame();
             DX11Base::g_Hooking->Shutdown();
@@ -25,6 +25,7 @@ DWORD WINAPI MainThread(LPVOID hInstance)
 {
     UNREFERENCED_PARAMETER(hInstance);
 
+    // @TODO: check for errors
     DX11Base::g_Engine = std::make_unique<DX11Base::Engine>();
     DX11Base::g_Console->InitializeConsole("Final Fantasy 7 Remake : Debug Console", true);      //  initialize console without menu gui
     DX11Base::g_Engine->Init();                                                                   //  Get Process Information
